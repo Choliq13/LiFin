@@ -1,0 +1,114 @@
+package com.example.lifin.data.repository
+
+import android.util.Log
+import com.example.lifin.SupabaseClient
+import com.example.lifin.WeightLog
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.withTimeout
+
+/**
+ * Repository untuk mengelola data WeightLog dari Supabase.
+ * VERSION: User-specific (dengan user_id)
+ */
+class WeightLogRepository {
+
+    /**
+     * Mengambil weight logs untuk user yang sedang login.
+     * Otomatis filter by user_id via RLS policy.
+     */
+    suspend fun getWeightLogs(): Result<List<WeightLog>> {
+        return try {
+            Log.d("WeightLogRepository", "Starting fetch from Supabase...")
+
+            // Check if user is logged in
+            val currentUser = SupabaseClient.client.auth.currentUserOrNull()
+            if (currentUser == null) {
+                Log.e("WeightLogRepository", "User not logged in")
+                return Result.failure(Exception("User not authenticated"))
+            }
+
+            Log.d("WeightLogRepository", "Fetching for user: ${currentUser.id}")
+
+            val data = withTimeout(10_000) {
+                val table = SupabaseClient.client.from("weight_logs")
+                Log.d("WeightLogRepository", "Table accessed: weight_logs")
+
+                // RLS policy otomatis filter by user_id = auth.uid()
+                val response = table.select()
+                Log.d("WeightLogRepository", "Query executed, parsing response...")
+
+                val result = response.decodeList<WeightLog>()
+                Log.d("WeightLogRepository", "Raw response decoded: ${result.size} items")
+
+                result.forEachIndexed { index, log ->
+                    Log.d("WeightLogRepository", "Item $index: id=${log.id}, weight=${log.weight}, created_at=${log.createdAt}")
+                }
+
+                result
+            }
+
+            Log.d("WeightLogRepository", "Successfully fetched ${data.size} weight logs")
+            Result.success(data)
+
+        } catch (e: Exception) {
+            Log.e("WeightLogRepository", "Failed to fetch weight logs: ${e.message}", e)
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Menambahkan weight log baru.
+     * user_id otomatis di-set via trigger.
+     */
+    suspend fun addWeightLog(weight: Double): Result<Unit> {
+        return try {
+            Log.d("WeightLogRepository", "Adding weight log: $weight kg")
+
+            val currentUser = SupabaseClient.client.auth.currentUserOrNull()
+            if (currentUser == null) {
+                return Result.failure(Exception("User not authenticated"))
+            }
+
+            withTimeout(10_000) {
+                SupabaseClient.client.from("weight_logs").insert(
+                    mapOf("weight" to weight)
+                    // user_id otomatis di-set via trigger
+                )
+            }
+
+            Log.d("WeightLogRepository", "✅ Weight log added successfully")
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Log.e("WeightLogRepository", "Failed to add weight log", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Menghapus weight log.
+     */
+    suspend fun deleteWeightLog(id: Long): Result<Unit> {
+        return try {
+            Log.d("WeightLogRepository", "Deleting weight log: $id")
+
+            withTimeout(10_000) {
+                SupabaseClient.client.from("weight_logs").delete {
+                    filter {
+                        eq("id", id)
+                    }
+                }
+            }
+
+            Log.d("WeightLogRepository", "✅ Weight log deleted")
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Log.e("WeightLogRepository", "Failed to delete weight log", e)
+            Result.failure(e)
+        }
+    }
+}
+
