@@ -11,9 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.onKeyEvent // added
-import androidx.compose.foundation.text.KeyboardOptions // added
-import androidx.compose.foundation.text.KeyboardActions // added
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.sp
 import com.example.lifin.R
 import com.example.lifin.data.repository.PinRepository
 import kotlinx.coroutines.launch
-import androidx.compose.ui.text.input.ImeAction // added
-import androidx.compose.ui.text.input.KeyboardType // added
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 
 enum class SetPinStep {
     ENTER_PIN,
@@ -43,7 +43,6 @@ fun SetPinScreen(
     var step by remember { mutableStateOf(SetPinStep.ENTER_PIN) }
     val boxCount = 6
 
-    // segmented states for both steps
     val firstDigits = remember { mutableStateListOf("", "", "", "", "", "") }
     val confirmDigits = remember { mutableStateListOf("", "", "", "", "", "") }
     val firstFocus = remember { List(boxCount) { FocusRequester() } }
@@ -107,7 +106,6 @@ fun SetPinScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Background Image
         Image(
             painter = painterResource(id = R.drawable.bgawal),
             contentDescription = "Background",
@@ -116,7 +114,6 @@ fun SetPinScreen(
             alpha = 0.5f
         )
 
-        // Centered card
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -139,7 +136,6 @@ fun SetPinScreen(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Title
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Text(
                             text = if (step == SetPinStep.ENTER_PIN) "Buat PIN" else "Konfirmasi PIN",
@@ -151,15 +147,19 @@ fun SetPinScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Segmented PIN row for current step
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         repeat(boxCount) { index ->
-                            val value = if (step == SetPinStep.ENTER_PIN) firstDigits[index] else confirmDigits[index]
-                            val requester = if (step == SetPinStep.ENTER_PIN) firstFocus[index] else confirmFocus[index]
+                            val value =
+                                if (step == SetPinStep.ENTER_PIN) firstDigits[index] else confirmDigits[index]
+                            val requester =
+                                if (step == SetPinStep.ENTER_PIN) firstFocus[index] else confirmFocus[index]
+
                             PinDigitBox(
                                 value = value,
                                 onValueChange = { ch ->
@@ -167,12 +167,20 @@ fun SetPinScreen(
                                         if (step == SetPinStep.ENTER_PIN) {
                                             firstDigits[index] = ch
                                             if (ch.isNotEmpty()) {
-                                                if (index < boxCount - 1) firstFocus[index + 1].requestFocus() else proceedOrError()
+                                                if (index < boxCount - 1) {
+                                                    firstFocus[index + 1].requestFocus()
+                                                } else {
+                                                    proceedOrError()
+                                                }
                                             }
                                         } else {
                                             confirmDigits[index] = ch
                                             if (ch.isNotEmpty()) {
-                                                if (index < boxCount - 1) confirmFocus[index + 1].requestFocus() else finishIfValid()
+                                                if (index < boxCount - 1) {
+                                                    confirmFocus[index + 1].requestFocus()
+                                                } else {
+                                                    finishIfValid()
+                                                }
                                             }
                                         }
                                     }
@@ -212,7 +220,6 @@ fun SetPinScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Primary button
                     Button(
                         onClick = {
                             if (step == SetPinStep.ENTER_PIN) proceedOrError() else finishIfValid()
@@ -224,7 +231,10 @@ fun SetPinScreen(
                             containerColor = Color(0xFF738A45)
                         ),
                         shape = RoundedCornerShape(8.dp),
-                        enabled = if (step == SetPinStep.ENTER_PIN) firstPin().length == boxCount else confirmPin().length == boxCount
+                        enabled = if (step == SetPinStep.ENTER_PIN)
+                            firstPin().length == boxCount
+                        else
+                            confirmPin().length == boxCount
                     ) {
                         Text(
                             text = if (step == SetPinStep.ENTER_PIN) "Lanjutkan" else "Selesai",
@@ -236,7 +246,6 @@ fun SetPinScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Optional helper
                     if (step == SetPinStep.CONFIRM_PIN) {
                         Text(
                             text = "Ubah PIN?",
@@ -257,7 +266,7 @@ fun SetPinScreen(
 }
 
 @Composable
-private fun PinDigitBox(
+private fun RowScope.PinDigitBox(
     value: String,
     onValueChange: (String) -> Unit,
     onBackspace: () -> Unit,
@@ -265,21 +274,29 @@ private fun PinDigitBox(
     isError: Boolean
 ) {
     val borderColor = if (isError) Color.Red else Color(0xFF738A45)
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier
-            .size(48.dp)
+            .width(44.dp)      // <<< LEBARENYA DIKURANGI
+            .height(56.dp)
             .focusRequester(focusRequester)
             .onKeyEvent { evt ->
-                val isBackspace = evt.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DEL
-                if (isBackspace) { onBackspace(); true } else false
+                val isBackspace =
+                    evt.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DEL
+                if (isBackspace) {
+                    onBackspace()
+                    true
+                } else false
             },
         singleLine = true,
+        maxLines = 1,
         textStyle = LocalTextStyle.current.copy(
             textAlign = TextAlign.Center,
             fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF000000)
         ),
         shape = RoundedCornerShape(8.dp),
         colors = OutlinedTextFieldDefaults.colors(
@@ -288,8 +305,8 @@ private fun PinDigitBox(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
             cursorColor = Color(0xFF738A45),
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black
+            focusedTextColor = Color(0xFF000000),
+            unfocusedTextColor = Color(0xFF000000)
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,

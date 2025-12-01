@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.*
 import java.text.SimpleDateFormat
-import com.example.lifin.ui.components.AppBottomNavBar
+import com.example.lifin.ui.components.BottomNavigationBar
 import com.example.lifin.ui.components.BottomNavItem
 
 // Removed stacked cards related data classes and composables (HealthCardModel, HealthCardType, StackedCardsSection, HealthCardItem, AktivitasFisikContent, GulaDarahContent, GulaDarahCard, TekananDarahContent, TekananDarahRow, KaloriContent, FoodItem)
@@ -36,7 +36,8 @@ import com.example.lifin.ui.components.BottomNavItem
 @Composable
 fun CalendarScreen(
     onNavigateToHome: () -> Unit = {},
-    onNavigateToProfile: () -> Unit = {}
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToCalendar: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { com.example.lifin.data.local.EncryptedPreferences(context) }
@@ -52,11 +53,12 @@ fun CalendarScreen(
 
     Scaffold(
         bottomBar = {
-            AppBottomNavBar(
+            BottomNavigationBar(
                 selected = BottomNavItem.Calendar,
                 onHome = onNavigateToHome,
-                onCalendar = { },
-                onProfile = onNavigateToProfile
+                onCalendar = onNavigateToCalendar,
+                onProfile = onNavigateToProfile,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
     ) { paddingValues ->
@@ -67,59 +69,7 @@ fun CalendarScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 20.dp)
         ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { displayMonth = displayMonth.minusMonths(1) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Prev", tint = Color(0xFF738A45))
-                    }
-                    Text(
-                        text = displayMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = { displayMonth = displayMonth.plusMonths(1) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next", tint = Color(0xFF738A45))
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-
-                // Calendar grid
-                for (week in 0..5) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        for (dow in 0..6) {
-                            val cellIndex = week * 7 + dow
-                            val dayNumber = cellIndex - startDayOfWeekIndex + 1
-                            if (dayNumber in 1..daysInMonth) {
-                                val date = firstOfMonth.withDayOfMonth(dayNumber)
-                                val iso = date.format(formatter)
-                                val bg = when {
-                                    loginDateIso == iso -> Color(0xFFFFF59D) // kuning prioritas
-                                    noteDates.contains(iso) -> Color(0xFFC8E6C9) // hijau
-                                    else -> Color.White
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(42.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(bg),
-                                    contentAlignment = Alignment.Center
-                                ) { Text(dayNumber.toString(), fontSize = 12.sp) }
-                            } else {
-                                Spacer(Modifier.weight(1f).height(42.dp))
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(6.dp))
-                }
-                Spacer(Modifier.height(24.dp))
-            }
-
-            // Health Curve Chart
+            // Health Curve Chart - PALING ATAS
             item {
                 Text(
                     "Health Curve",
@@ -135,6 +85,188 @@ fun CalendarScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
+            // Kalender - SETELAH HEALTH CURVE
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        // Header dengan bulan dan navigasi
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Color(0xFF8BC34A),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(vertical = 8.dp, horizontal = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = { displayMonth = displayMonth.minusMonths(1) }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Prev",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                            Text(
+                                text = displayMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            IconButton(onClick = { displayMonth = displayMonth.plusMonths(1) }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = "Next",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                // Header hari (Sen, Sel, Rab, dll)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf("Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab").forEach { day ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = day,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF293E00)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Calendar grid dengan desain lebih jelas
+                for (week in 0..5) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        for (dow in 0..6) {
+                            val cellIndex = week * 7 + dow
+                            val dayNumber = cellIndex - startDayOfWeekIndex + 1
+                            if (dayNumber in 1..daysInMonth) {
+                                val date = firstOfMonth.withDayOfMonth(dayNumber)
+                                val iso = date.format(formatter)
+                                val bg = when {
+                                    loginDateIso == iso -> Color(0xFFFFEB3B) // kuning terang untuk login
+                                    noteDates.contains(iso) -> Color(0xFF8BC34A) // hijau terang untuk note
+                                    else -> Color.White
+                                }
+                                val textColor = when {
+                                    loginDateIso == iso -> Color(0xFF000000) // hitam
+                                    noteDates.contains(iso) -> Color.White // putih
+                                    else -> Color(0xFF293E00) // hijau tua
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(bg)
+                                        .border(
+                                            width = 1.dp,
+                                            color = Color(0xFF293E00).copy(alpha = 0.3f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = dayNumber.toString(),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = textColor
+                                    )
+                                }
+                            } else {
+                                Spacer(Modifier.weight(1f).height(48.dp))
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(6.dp))
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Legend / Keterangan warna
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // Keterangan Login
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFFFFEB3B))
+                                .border(
+                                    width = 1.dp,
+                                    color = Color(0xFF293E00).copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                        )
+                        Text(
+                            "Login",
+                            fontSize = 12.sp,
+                            color = Color(0xFF293E00)
+                        )
+                    }
+
+                    // Keterangan Health Note
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFF8BC34A))
+                                .border(
+                                    width = 1.dp,
+                                    color = Color(0xFF293E00).copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                        )
+                        Text(
+                            "Health Note",
+                            fontSize = 12.sp,
+                            color = Color(0xFF293E00)
+                        )
+                    }
+                }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+            }
+
+
             // Progress Circle Stats
             item {
                 ProgressStatsSection()
@@ -142,7 +274,7 @@ fun CalendarScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // History Pencatatan
+            // History Pencatatan - DATA REAL
             item {
                 Text(
                     "History Pencatatan",
@@ -154,9 +286,37 @@ fun CalendarScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            items(historyItems) { item ->
-                HistoryItem(item)
-                Spacer(modifier = Modifier.height(8.dp))
+            // Ambil data real dari EncryptedPreferences
+            val historyData = prefs.getAllHealthHistory()
+
+            if (historyData.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Belum ada history.\nInput data kesehatan di Home!",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(historyData) { historyItem ->
+                    RealHistoryItem(historyItem)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
     }
@@ -164,53 +324,139 @@ fun CalendarScreen(
 
 @Composable
 fun HealthCurveChart() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { com.example.lifin.data.local.EncryptedPreferences(context) }
+    val healthDataList = remember { prefs.getLastSevenDaysHealthData() }
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Simple bar chart representation
+            // Chart with Y-axis
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .align(Alignment.BottomCenter),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Bottom
             ) {
-                // Sample data - 7 bars (Sunday to Saturday)
-                BarChartItem(heightPercent = 0.4f, color1 = Color(0xFF56AAFF), color2 = Color(0xFFFF5699))
-                BarChartItem(heightPercent = 0.5f, color1 = Color(0xFF56AAFF), color2 = Color(0xFFFF5699))
-                BarChartItem(heightPercent = 0.7f, color1 = Color(0xFF56AAFF), color2 = Color(0xFFFF5699))
-                BarChartItem(heightPercent = 0.6f, color1 = Color(0xFF56AAFF), color2 = Color(0xFFFF5699))
-                BarChartItem(heightPercent = 0.8f, color1 = Color(0xFF56AAFF), color2 = Color(0xFFFF5699))
-                BarChartItem(heightPercent = 0.65f, color1 = Color(0xFF56AAFF), color2 = Color(0xFFFF5699))
-                BarChartItem(heightPercent = 0.7f, color1 = Color(0xFF56AAFF), color2 = Color(0xFFFF5699))
+                // Y-axis labels - Berat Badan (10-150)
+                Column(
+                    modifier = Modifier
+                        .width(28.dp)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("150", fontSize = 8.sp, color = Color.Gray)
+                    Text("130", fontSize = 8.sp, color = Color.Gray)
+                    Text("110", fontSize = 8.sp, color = Color.Gray)
+                    Text("90", fontSize = 8.sp, color = Color.Gray)
+                    Text("70", fontSize = 8.sp, color = Color.Gray)
+                    Text("50", fontSize = 8.sp, color = Color.Gray)
+                    Text("30", fontSize = 8.sp, color = Color.Gray)
+                    Text("10", fontSize = 8.sp, color = Color.Gray)
+                }
+
+                // Chart bars - DATA REAL dari input user
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    if (healthDataList.isEmpty()) {
+                        // Tampilkan placeholder jika belum ada data
+                        Text(
+                            "Belum ada data.\nInput di Home!",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        )
+                    } else {
+                        // Tampilkan data real (max 7 hari terakhir)
+                        healthDataList.take(7).forEach { (date, data) ->
+                            val beratBadanValue = data.beratBadan.toFloatOrNull() ?: 0f
+                            val tinggiBadanValue = data.tinggiBadan.toFloatOrNull() ?: 0f
+
+                            // Normalize ke 0-1 range
+                            val beratPercent = ((beratBadanValue - 10f) / (150f - 10f)).coerceIn(0f, 1f)
+                            val tinggiPercent = ((tinggiBadanValue - 100f) / (200f - 100f)).coerceIn(0f, 1f)
+
+                            BarChartItem(
+                                heightPercent = maxOf(beratPercent, tinggiPercent),
+                                color1 = Color(0xFF56AAFF),
+                                color2 = Color(0xFFFF5699)
+                            )
+                        }
+
+                        // Fill remaining bars jika kurang dari 7
+                        repeat(7 - healthDataList.size.coerceAtMost(7)) {
+                            Spacer(modifier = Modifier.width(12.dp))
+                        }
+                    }
+                }
+
+                // Y-axis labels - Tinggi Badan (100-200)
+                Column(
+                    modifier = Modifier
+                        .width(28.dp)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("200", fontSize = 8.sp, color = Color.Gray)
+                    Text("185", fontSize = 8.sp, color = Color.Gray)
+                    Text("170", fontSize = 8.sp, color = Color.Gray)
+                    Text("155", fontSize = 8.sp, color = Color.Gray)
+                    Text("140", fontSize = 8.sp, color = Color.Gray)
+                    Text("125", fontSize = 8.sp, color = Color.Gray)
+                    Text("110", fontSize = 8.sp, color = Color.Gray)
+                    Text("100", fontSize = 8.sp, color = Color.Gray)
+                }
             }
 
-            // Tooltip (Rectangle 65)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = 20.dp)
-                    .background(Color(0xFF56AAFF), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Legend - Keterangan warna
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // Tinggi Badan
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(Color(0xFF56AAFF), RoundedCornerShape(2.dp))
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    "Rectangle 65",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    "Tinggi Badan",
+                    fontSize = 10.sp,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Berat Badan
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(Color(0xFFFF5699), RoundedCornerShape(2.dp))
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "Berat Badan",
+                    fontSize = 10.sp,
+                    color = Color.Gray
                 )
             }
         }
@@ -399,32 +645,47 @@ fun CalendarDayItem(
 
 @Composable
 fun ProgressStatsSection() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { com.example.lifin.data.local.EncryptedPreferences(context) }
+    val healthHistory = remember { prefs.getAllHealthHistory() }
+
+    // Hitung progress dari data yang ada
+    val totalDaysWithData = healthHistory.size
+    val progress = (totalDaysWithData / 30f).coerceAtMost(1f) // Target 30 hari
+    val progressPercent = (progress * 100).toInt()
+
+    // Hitung total aktivitas dan nutrisi
+    val totalAktivitas = healthHistory.sumOf {
+        it.data.aktivitas.toIntOrNull() ?: 0
+    }
+    val totalNutrisi = healthHistory.size // Jumlah hari input nutrisi
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Circular Progress
+        // Circular Progress - OTOMATIS DARI DATA
         Box(
             modifier = Modifier.size(140.dp),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(
-                progress = { 0.87f },
+                progress = { progress },
                 modifier = Modifier.size(140.dp),
                 strokeWidth = 12.dp,
                 color = Color(0xFF51E0F9),
                 trackColor = Color(0xFFE0E0E0)
             )
             CircularProgressIndicator(
-                progress = { 0.65f },
+                progress = { progress * 0.75f },
                 modifier = Modifier.size(110.dp),
                 strokeWidth = 12.dp,
                 color = Color(0xFFFF1414),
                 trackColor = Color.Transparent
             )
             Text(
-                "87%",
+                "$progressPercent%",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -433,26 +694,26 @@ fun ProgressStatsSection() {
 
         Spacer(modifier = Modifier.width(20.dp))
 
-        // Stats
+        // Stats - DATA REAL
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatItem(
-                icon = "🔥",
-                value = "1,820",
-                unit = "kcal",
+                icon = "📊",
+                value = "$totalDaysWithData",
+                unit = "hari",
                 color = Color(0xFF51E0F9)
             )
             StatItem(
                 icon = "🔥",
-                value = "50",
+                value = "$totalAktivitas",
                 unit = "mnt",
                 color = Color(0xFFFF1414)
             )
             StatItem(
-                icon = "🥛",
-                value = "7",
-                unit = "gelas",
+                icon = "🍎",
+                value = "$totalNutrisi",
+                unit = "meals",
                 color = Color(0xFF9B89FF)
             )
         }
@@ -524,3 +785,132 @@ fun HistoryItem(item: HistoryItemData) {
         }
     }
 }
+
+@Composable
+fun RealHistoryItem(historyItem: com.example.lifin.data.local.HealthHistoryItem) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Format tanggal untuk ditampilkan
+    val dateFormatter = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id", "ID"))
+    val date = try {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(historyItem.date)
+    } catch (e: Exception) {
+        Date()
+    }
+    val formattedDate = dateFormatter.format(date ?: Date())
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    formattedDate,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+
+                TextButton(onClick = { expanded = !expanded }) {
+                    Text(
+                        if (expanded) "Tutup" else "Detail",
+                        color = Color(0xFF56AAFF),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // Detail data (collapsed/expanded)
+            if (expanded) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF5F9F3), RoundedCornerShape(8.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (historyItem.data.beratBadan.isNotBlank()) {
+                        HistoryDetailRow("Berat Badan", "${historyItem.data.beratBadan} kg")
+                    }
+                    if (historyItem.data.tinggiBadan.isNotBlank()) {
+                        HistoryDetailRow("Tinggi Badan", "${historyItem.data.tinggiBadan} cm")
+                    }
+                    if (historyItem.data.tekananDarah.isNotBlank()) {
+                        HistoryDetailRow("Tekanan Darah", historyItem.data.tekananDarah)
+                    }
+                    if (historyItem.data.gulaDarah.isNotBlank()) {
+                        HistoryDetailRow("Gula Darah", "${historyItem.data.gulaDarah} mg/dL")
+                    }
+                    if (historyItem.data.aktivitas.isNotBlank()) {
+                        HistoryDetailRow("Aktivitas", "${historyItem.data.aktivitas} menit")
+                    }
+                    if (historyItem.data.nutrisi.isNotBlank()) {
+                        HistoryDetailRow("Nutrisi", historyItem.data.nutrisi)
+                    }
+
+                    // Nutrisi details
+                    if (historyItem.data.menuMakanan.isNotBlank()) {
+                        HistoryDetailRow("Menu Makanan", historyItem.data.menuMakanan)
+                    }
+                    if (historyItem.data.sesiMakan.isNotBlank()) {
+                        HistoryDetailRow("Sesi Makan", historyItem.data.sesiMakan)
+                    }
+                    if (historyItem.data.karbohidrat.isNotBlank()) {
+                        HistoryDetailRow("Karbohidrat", "${historyItem.data.karbohidrat}g")
+                    }
+                    if (historyItem.data.protein.isNotBlank()) {
+                        HistoryDetailRow("Protein", "${historyItem.data.protein}g")
+                    }
+                    if (historyItem.data.kalori.isNotBlank()) {
+                        HistoryDetailRow("Kalori", "${historyItem.data.kalori} kkal")
+                    }
+
+                    // Aktivitas details
+                    if (historyItem.data.durasi.isNotBlank()) {
+                        HistoryDetailRow("Durasi Aktivitas", "${historyItem.data.durasi} menit")
+                    }
+                    if (historyItem.data.jenisAktivitas.isNotBlank()) {
+                        HistoryDetailRow("Jenis Aktivitas", historyItem.data.jenisAktivitas)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HistoryDetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            label,
+            fontSize = 12.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            value,
+            fontSize = 12.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+

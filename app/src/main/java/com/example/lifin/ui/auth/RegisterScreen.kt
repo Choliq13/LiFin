@@ -206,6 +206,18 @@ fun RegisterScreen(
                                     scope.launch {
                                         val result = authRepository.register(email, password)
                                         result.onSuccess {
+                                            // Simpan nama user ke EncryptedPreferences
+                                            val prefs = com.example.lifin.data.local.EncryptedPreferences(context)
+
+                                            // Split nama jadi first name dan last name
+                                            val nameParts = name.trim().split(" ", limit = 2)
+                                            if (nameParts.isNotEmpty()) {
+                                                prefs.setProfileFirstName(nameParts[0])
+                                                if (nameParts.size > 1) {
+                                                    prefs.setProfileLastName(nameParts[1])
+                                                }
+                                            }
+
                                             isLoading = false
                                             // Notify success to caller (AppNavGraph will pop back to login)
                                             onRegisterSuccess()

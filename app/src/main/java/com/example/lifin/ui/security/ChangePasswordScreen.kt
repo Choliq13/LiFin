@@ -40,10 +40,21 @@ fun ChangePasswordScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Change Password", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Ubah Password",
+                        fontSize = 20.sp,  // Diperbesar dari 18sp ke 20sp
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF293E00)  // Warna hijau tua
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color(0xFF293E00)  // Icon juga hijau tua
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -75,23 +86,28 @@ fun ChangePasswordScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     PasswordField(
-                        label = "Current Password",
+                        label = "Password Saat Ini",
                         value = currentPassword,
                         onChange = { currentPassword = it }
                     )
                     PasswordField(
-                        label = "New Password",
+                        label = "Password Baru",
                         value = newPassword,
                         onChange = { newPassword = it }
                     )
                     PasswordField(
-                        label = "Confirm Password",
+                        label = "Konfirmasi Password Baru",
                         value = confirmPassword,
                         onChange = { confirmPassword = it }
                     )
 
                     if (errorMessage != null) {
-                        Text(errorMessage!!, color = Color.Red, fontSize = 12.sp)
+                        Text(
+                            text = errorMessage!!,
+                            color = Color.Red,
+                            fontSize = 14.sp,  // Diperbesar dari 12sp ke 14sp
+                            fontWeight = FontWeight.Medium
+                        )
                     }
 
                     Button(
@@ -101,22 +117,22 @@ fun ChangePasswordScreen(
                             errorMessage = null
                             when {
                                 currentPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank() -> {
-                                    errorMessage = "All fields are required"
+                                    errorMessage = "Semua field harus diisi"
                                 }
                                 newPassword.length < 6 -> {
-                                    errorMessage = "New password must be at least 6 characters"
+                                    errorMessage = "Password baru minimal 6 karakter"
                                 }
                                 newPassword != confirmPassword -> {
-                                    errorMessage = "Password confirmation does not match"
+                                    errorMessage = "Konfirmasi password tidak cocok"
                                 }
                                 else -> {
                                     // Integrasi stub AuthRepository
                                     val result = com.example.lifin.data.repository.AuthRepository(context).changePassword(currentPassword, newPassword)
                                     if (result.isSuccess) {
-                                        scope.launch { snackbarHostState.showSnackbar("Password changed successfully") }
+                                        scope.launch { snackbarHostState.showSnackbar("Password berhasil diubah") }
                                         onPasswordChanged()
                                     } else {
-                                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to change password"
+                                        errorMessage = result.exceptionOrNull()?.message ?: "Gagal mengubah password"
                                     }
                                 }
                             }
@@ -125,11 +141,16 @@ fun ChangePasswordScreen(
                             }
                             isSubmitting = false
                         },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(56.dp),  // Diperbesar dari 48dp ke 56dp
+                        shape = RoundedCornerShape(50.dp),  // Lebih rounded
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF738A45))
                     ) {
-                        Text("Save", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Simpan Perubahan",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp  // Font size button text diperbesar
+                        )
                     }
                 }
             }
@@ -140,7 +161,12 @@ fun ChangePasswordScreen(
 @Composable
 private fun PasswordField(label: String, value: String, onChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        Text(
+            text = label,
+            fontSize = 16.sp,  // Diperbesar dari 12sp ke 16sp
+            fontWeight = FontWeight.SemiBold,  // Bold untuk lebih terlihat
+            color = Color(0xFF293E00)  // Warna hijau tua yang kontras
+        )
         OutlinedTextField(
             value = value,
             onValueChange = onChange,
@@ -150,12 +176,17 @@ private fun PasswordField(label: String, value: String, onChange: (String) -> Un
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next
             ),
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF738A45),
-                unfocusedBorderColor = Color(0xFFB7B4B4),
+                unfocusedBorderColor = Color(0xFF738A45).copy(alpha = 0.5f),
                 focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
+                unfocusedContainerColor = Color(0xFFF5F9F3)  // Background hijau muda
+            ),
+            textStyle = LocalTextStyle.current.copy(
+                fontSize = 16.sp,  // Text input lebih besar
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF293E00)
             ),
             modifier = Modifier.fillMaxWidth()
         )

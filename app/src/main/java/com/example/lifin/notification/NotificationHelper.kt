@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.lifin.R
@@ -25,8 +27,23 @@ object NotificationHelper {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
             channel.description = "Daily health and weight logging reminders"
+
+            // Enable lights
             channel.enableLights(true)
             channel.lightColor = Color.GREEN
+
+            // Enable vibration
+            channel.enableVibration(true)
+            channel.vibrationPattern = longArrayOf(0, 500, 200, 500)
+
+            // Set sound - menggunakan nada notifikasi default sistem
+            val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val audioAttributes = android.media.AudioAttributes.Builder()
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                .build()
+            channel.setSound(soundUri, audioAttributes)
+
             nm.createNotificationChannel(channel)
         }
     }
@@ -70,12 +87,35 @@ object NotificationHelper {
         alarmManager.cancel(pi)
     }
 
+    private val healthMessages = listOf(
+        "🌟 Terus hidup sehat! Jangan lupa olahraga hari ini",
+        "💪 Sudah waktunya bergerak! Tubuh sehat dimulai dari sekarang",
+        "🏃 Jangan lupa olahraga! Hidup sehat adalah investasi terbaik",
+        "🥗 Makan sehat, olahraga rutin, hidup jadi lebih semangat!",
+        "✨ Tubuh sehat, pikiran cerdas! Ayo catat kesehatan Anda hari ini",
+        "🎯 Ingat target kesehatan Anda! Catat berat badan hari ini",
+        "💚 Jaga kesehatan, jaga masa depan! Yuk olahraga 30 menit",
+        "🌈 Sehat itu nikmat! Jangan lupa bergerak dan berolahraga",
+        "⚡ Energi positif dimulai dari tubuh sehat! Ayo olahraga!",
+        "🌸 Hidup sehat itu pilihan! Mulai dari olahraga hari ini"
+    )
+
     fun buildNotification(context: Context): android.app.Notification {
+        // Pilih pesan random untuk variasi
+        val randomMessage = healthMessages.random()
+
+        // Nada notifikasi default sistem
+        val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("LiFin Reminder")
-            .setContentText("Don't forget to log your weight and check your goals today.")
+            .setContentTitle("🏥 LiFin - Pengingat Kesehatan")
+            .setContentText(randomMessage)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(randomMessage))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setVibrate(longArrayOf(0, 500, 200, 500))
+            .setSound(soundUri) // Menambahkan nada dering
             .build()
     }
 }

@@ -140,4 +140,105 @@ class EncryptedPreferences(context: Context) {
         val current = prefs.getString(KEY_HEALTH_NOTE_DATES, "") ?: ""
         return current.split(',').filter { it.isNotBlank() }.toSet()
     }
+
+    // === HEALTH DATA STORAGE ===
+    // Menyimpan data kesehatan per tanggal untuk grafik dan history
+
+    fun saveHealthData(date: String, data: HealthData) {
+        val key = "health_data_$date"
+        prefs.edit().apply {
+            putString("${key}_beratBadan", data.beratBadan)
+            putString("${key}_tinggiBadan", data.tinggiBadan)
+            putString("${key}_tekananDarah", data.tekananDarah)
+            putString("${key}_gulaDarah", data.gulaDarah)
+            putString("${key}_aktivitas", data.aktivitas)
+            putString("${key}_nutrisi", data.nutrisi)
+            // Nutrisi details
+            putString("${key}_menuMakanan", data.menuMakanan)
+            putString("${key}_sesiMakan", data.sesiMakan)
+            putString("${key}_makananUtama", data.makananUtama)
+            putString("${key}_makananPendamping", data.makananPendamping)
+            putString("${key}_karbohidrat", data.karbohidrat)
+            putString("${key}_protein", data.protein)
+            putString("${key}_lemak", data.lemak)
+            putString("${key}_kalori", data.kalori)
+            // Aktivitas details
+            putString("${key}_durasi", data.durasi)
+            putString("${key}_jenisAktivitas", data.jenisAktivitas)
+            apply()
+        }
+    }
+
+    fun getHealthData(date: String): HealthData? {
+        val key = "health_data_$date"
+        val beratBadan = prefs.getString("${key}_beratBadan", null) ?: return null
+        return HealthData(
+            beratBadan = beratBadan,
+            tinggiBadan = prefs.getString("${key}_tinggiBadan", "") ?: "",
+            tekananDarah = prefs.getString("${key}_tekananDarah", "") ?: "",
+            gulaDarah = prefs.getString("${key}_gulaDarah", "") ?: "",
+            aktivitas = prefs.getString("${key}_aktivitas", "") ?: "",
+            nutrisi = prefs.getString("${key}_nutrisi", "") ?: "",
+            // Nutrisi details
+            menuMakanan = prefs.getString("${key}_menuMakanan", "") ?: "",
+            sesiMakan = prefs.getString("${key}_sesiMakan", "") ?: "",
+            makananUtama = prefs.getString("${key}_makananUtama", "") ?: "",
+            makananPendamping = prefs.getString("${key}_makananPendamping", "") ?: "",
+            karbohidrat = prefs.getString("${key}_karbohidrat", "") ?: "",
+            protein = prefs.getString("${key}_protein", "") ?: "",
+            lemak = prefs.getString("${key}_lemak", "") ?: "",
+            kalori = prefs.getString("${key}_kalori", "") ?: "",
+            // Aktivitas details
+            durasi = prefs.getString("${key}_durasi", "") ?: "",
+            jenisAktivitas = prefs.getString("${key}_jenisAktivitas", "") ?: ""
+        )
+    }
+
+    // Mendapatkan semua data kesehatan untuk grafik (7 hari terakhir)
+    fun getLastSevenDaysHealthData(): List<Pair<String, HealthData>> {
+        val dates = getHealthNoteDates().sortedDescending().take(7)
+        return dates.mapNotNull { date ->
+            getHealthData(date)?.let { date to it }
+        }
+    }
+
+    // Mendapatkan history untuk ditampilkan di calendar
+    fun getAllHealthHistory(): List<HealthHistoryItem> {
+        val dates = getHealthNoteDates().sortedDescending()
+        return dates.mapNotNull { date ->
+            getHealthData(date)?.let {
+                HealthHistoryItem(
+                    date = date,
+                    data = it
+                )
+            }
+        }
+    }
 }
+
+// Data classes untuk health data
+data class HealthData(
+    val beratBadan: String,
+    val tinggiBadan: String,
+    val tekananDarah: String,
+    val gulaDarah: String,
+    val aktivitas: String,
+    val nutrisi: String,
+    // Nutrisi details (optional)
+    val menuMakanan: String = "",
+    val sesiMakan: String = "",
+    val makananUtama: String = "",
+    val makananPendamping: String = "",
+    val karbohidrat: String = "",
+    val protein: String = "",
+    val lemak: String = "",
+    val kalori: String = "",
+    // Aktivitas details (optional)
+    val durasi: String = "",
+    val jenisAktivitas: String = ""
+)
+
+data class HealthHistoryItem(
+    val date: String,
+    val data: HealthData
+)

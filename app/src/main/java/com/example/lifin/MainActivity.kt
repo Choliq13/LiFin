@@ -3,13 +3,17 @@ package com.example.lifin
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -32,9 +36,25 @@ data class WeightLog(
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Make the app full screen
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
+            val view = LocalView.current
+            DisposableEffect(Unit) {
+                val window = (view.context as ComponentActivity).window
+                val insetsController = WindowCompat.getInsetsController(window, view)
+
+                // Hide the system bars (status & navigation)
+                insetsController.hide(WindowInsetsCompat.Type.systemBars())
+
+                // Allow showing the system bars by swiping from the edges
+                insetsController.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+                onDispose {}
+            }
+
             LiFinTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),

@@ -13,7 +13,8 @@ import com.example.lifin.ui.profile.ProfileScreen
 import com.example.lifin.ui.profile.EditProfileScreen
 import com.example.lifin.ui.security.ChangePasswordScreen
 import com.example.lifin.ui.security.PinVerifyScreen
-import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -78,7 +79,7 @@ fun AppNavGraph(
             com.example.lifin.ui.auth.LoginScreen(
                 onLoginSuccess = {
                     // mark login date
-                    val iso = java.time.LocalDate.now().toString()
+                    val iso = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                     prefs.setLastLoginDateIso(iso)
                     val isPinSet = pinRepository.isPinSet()
                     if (isPinSet) {
@@ -139,6 +140,9 @@ fun AppNavGraph(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.PinVerify.route) { inclusive = true }
                     }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
                 }
             )
         }
@@ -147,16 +151,13 @@ fun AppNavGraph(
         composable(Screen.Home.route) {
             val context = androidx.compose.ui.platform.LocalContext.current
             val prefs = remember { com.example.lifin.data.local.EncryptedPreferences(context) }
-            com.example.lifin.ui.home.HomeScreen(
-                onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
-                },
-                onNavigateToCalendar = {
-                    navController.navigate(Screen.Calendar.route)
-                },
+            HomeScreen(
+                onNavigateToHome = { },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToCalendar = { navController.navigate(Screen.Calendar.route) },
                 onHealthNoteAdded = {
                     // store note date for calendar
-                    val iso = java.time.LocalDate.now().toString()
+                    val iso = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                     prefs.addHealthNoteDate(iso)
                 }
             )
@@ -171,8 +172,11 @@ fun AppNavGraph(
                     }
                 },
                 onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
-                }
+                    navController.navigate(Screen.Profile.route) {
+                        popUpTo(Screen.Home.route)
+                    }
+                },
+                onNavigateToCalendar = { }
             )
         }
 
@@ -181,8 +185,17 @@ fun AppNavGraph(
             ProfileScreen(
                 authRepository = authRepository,
                 pinRepository = pinRepository,
-                onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                onNavigateToCalendar = { navController.navigate(Screen.Calendar.route) },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onNavigateToCalendar = {
+                    navController.navigate(Screen.Calendar.route) {
+                        popUpTo(Screen.Home.route)
+                    }
+                },
+                onNavigateToProfile = { },
                 onLogoutSuccess = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }

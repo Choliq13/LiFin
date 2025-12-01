@@ -1,15 +1,18 @@
 package com.example.lifin.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,23 +25,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.example.lifin.R
 
-// Data model untuk stacked cards (dipindahkan dari CalendarScreen)
-data class HealthCardModel(
-    val id: Int,
+// Data model for the new expandable cards
+private data class InfoCardModel(
     val title: String,
-    val color: Color,
-    val type: HealthCardType
+    val icon: Int,
+    val backgroundColor: Color,
+    val content: @Composable () -> Unit
 )
-
-enum class HealthCardType {
-    AKTIVITAS_FISIK,
-    GULA_DARAH,
-    TEKANAN_DARAH,
-    KALORI
-}
 
 @Composable
 fun OtherInformationSection() {
@@ -49,102 +44,136 @@ fun OtherInformationSection() {
         color = Color.Black
     )
     Spacer(modifier = Modifier.height(16.dp))
-    StackedCardsSection()
-}
 
-@Composable
-fun StackedCardsSection() {
-    val cards = listOf(
-        HealthCardModel(0, "Aktivitas Fisik", Color(0xFF2ECC71), HealthCardType.AKTIVITAS_FISIK),
-        HealthCardModel(1, "Gula Darah", Color(0xFF5DADE2), HealthCardType.GULA_DARAH),
-        HealthCardModel(2, "Tekanan Darah", Color(0xFFEC407A), HealthCardType.TEKANAN_DARAH),
-        HealthCardModel(3, "Kalori", Color(0xFFF4D03F), HealthCardType.KALORI)
+    val infoCards = listOf(
+        InfoCardModel(
+            title = "Aktivitas Fisik",
+            icon = R.drawable.anaksenam, // Placeholder icon
+            backgroundColor = Color(0xFFA5D6A7),
+            content = { AktivitasFisikContent() }
+        ),
+        InfoCardModel(
+            title = "Gula Darah",
+            icon = R.drawable.ukuran, // Placeholder icon
+            backgroundColor = Color(0xFF90CAF9),
+            content = { GulaDarahContent() }
+        ),
+        InfoCardModel(
+            title = "Tekanan Darah",
+            icon = R.drawable.termometer, // Placeholder icon
+            backgroundColor = Color(0xFFF48FB1),
+            content = { TekananDarahContent() }
+        ),
+        InfoCardModel(
+            title = "Asupan Kalori",
+            icon = R.drawable.brokoli, // Placeholder icon
+            backgroundColor = Color(0xFFFFF176),
+            content = { KaloriContent() }
+        )
     )
 
-    var expandedCardId by remember { mutableStateOf<Int?>(3) }
+    // State to keep track of which card is expanded. Null means all are collapsed.
+    var expandedCard by remember { mutableStateOf<String?>(null) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        cards.forEachIndexed { index, card ->
-            val isSelected = expandedCardId == card.id
-            val targetOffset = if (isSelected) 0.dp else (index * 60).dp
-            val animatedOffset by animateDpAsState(
-                targetValue = targetOffset,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                ), label = "offsetAnim"
-            )
-            val zIndexValue = if (isSelected) 10f else index.toFloat()
-
-            HealthCardItem(
-                card = card,
-                offsetY = animatedOffset,
-                zIndex = zIndexValue,
-                isExpanded = isSelected,
-                onClick = { expandedCardId = card.id }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        infoCards.forEach { card ->
+            ExpandableInfoCard(
+                title = card.title,
+                icon = card.icon,
+                backgroundColor = card.backgroundColor,
+                isExpanded = expandedCard == card.title,
+                onToggle = {
+                    expandedCard = if (expandedCard == card.title) null else card.title
+                },
+                content = card.content
             )
         }
     }
 }
 
 @Composable
-fun HealthCardItem(
-    card: HealthCardModel,
-    offsetY: androidx.compose.ui.unit.Dp,
-    zIndex: Float,
+private fun ExpandableInfoCard(
+    title: String,
+    icon: Int,
+    backgroundColor: Color,
     isExpanded: Boolean,
-    onClick: () -> Unit
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(if (isExpanded) 350.dp else 280.dp)
-            .offset(y = offsetY)
-            .zIndex(zIndex)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = card.color),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+            .clickable(onClick = onToggle),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxSize()
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(2.dp, Color.White, RoundedCornerShape(50.dp))
-                    .padding(vertical = 12.dp, horizontal = 20.dp),
-                contentAlignment = Alignment.Center
+            // Header Row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = card.title,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = icon),
+                            contentDescription = title,
+                            modifier = Modifier.size(32.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color.Black.copy(alpha = 0.8f)
+                    )
+                }
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Expand",
+                    tint = Color.Black.copy(alpha = 0.6f)
                 )
             }
-            Spacer(modifier = Modifier.height(20.dp))
-            when (card.type) {
-                HealthCardType.AKTIVITAS_FISIK -> AktivitasFisikContent()
-                HealthCardType.GULA_DARAH -> GulaDarahContent()
-                HealthCardType.TEKANAN_DARAH -> TekananDarahContent()
-                HealthCardType.KALORI -> KaloriContent()
+
+            // Content Section
+            AnimatedVisibility(visible = isExpanded) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider(color = Color.White.copy(alpha = 0.5f), thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    content()
+                }
             }
         }
     }
 }
 
+
+// Keep the original content composables but maybe adjust padding/background if needed
+
 @Composable
 fun AktivitasFisikContent() {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -169,14 +198,16 @@ fun AktivitasFisikContent() {
         }
         Spacer(modifier = Modifier.height(12.dp))
         Column(
-            modifier = Modifier.padding(start = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text("1. Lari", color = Color.Black, fontSize = 14.sp)
-            Text("2. Tenis", color = Color.Black, fontSize = 14.sp)
-            Text("3. Bersepeda", color = Color.Black, fontSize = 14.sp)
-            Text("4. Berenang", color = Color.Black, fontSize = 14.sp)
-            Text("5. Sepak Bola", color = Color.Black, fontSize = 14.sp)
+            Text("1. Lari", color = Color.Black, fontSize = 13.sp)
+            Text("2. Tenis", color = Color.Black, fontSize = 13.sp)
+            Text("3. Bersepeda", color = Color.Black, fontSize = 13.sp)
+            Text("4. Berenang", color = Color.Black, fontSize = 13.sp)
+            Text("5. Sepak Bola", color = Color.Black, fontSize = 13.sp)
         }
         Spacer(modifier = Modifier.height(8.dp))
         Image(
@@ -184,7 +215,7 @@ fun AktivitasFisikContent() {
             contentDescription = "Aktivitas Fisik",
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp),
+                .height(70.dp),
             contentScale = ContentScale.Fit
         )
     }
@@ -197,7 +228,6 @@ fun GulaDarahContent() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -245,7 +275,6 @@ fun TekananDarahContent() {
             .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
         TekananDarahRow("Tekanan Darah Normal", "<120 / <80")
         TekananDarahRow("Tekanan Darah Meningkat", "120-129 / <80")
         TekananDarahRow("Hipertensi Tahap 1", "130-139 / 80-89")
@@ -360,4 +389,3 @@ fun FoodItem(imageRes: Int, label: String) {
         }
     }
 }
-

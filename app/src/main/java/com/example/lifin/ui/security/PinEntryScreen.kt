@@ -65,13 +65,12 @@ fun PinEntryScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(boxCount) { index ->
-                    val value = digits[index]
                     OutlinedTextField(
-                        value = value,
+                        value = digits[index],
                         onValueChange = { ch ->
                             if (ch.length <= 1 && ch.all { it.isDigit() }) {
                                 digits[index] = ch
@@ -79,16 +78,20 @@ fun PinEntryScreen(
                                     if (index < boxCount - 1) {
                                         focusRequesters[index + 1].requestFocus()
                                     } else {
-                                        if (currentPin().length == boxCount) onPinComplete(currentPin())
+                                        if (currentPin().length == boxCount) {
+                                            onPinComplete(currentPin())
+                                        }
                                     }
                                 }
                             }
                         },
                         modifier = Modifier
-                            .size(52.dp)
+                            .width(48.dp)
+                            .height(56.dp)
                             .focusRequester(focusRequesters[index])
                             .onKeyEvent { e ->
-                                val isBackspace = e.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DEL
+                                val isBackspace =
+                                    e.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DEL
                                 if (isBackspace) {
                                     if (digits[index].isEmpty() && index > 0) {
                                         digits[index - 1] = ""
@@ -100,11 +103,13 @@ fun PinEntryScreen(
                                 } else false
                             },
                         singleLine = true,
+                        readOnly = false,
+                        maxLines = 1,
                         textStyle = LocalTextStyle.current.copy(
                             textAlign = TextAlign.Center,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color(0xFFFFFFFF)
                         ),
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -124,6 +129,10 @@ fun PinEntryScreen(
                         placeholder = {},
                         isError = localError
                     )
+
+                    if (index < boxCount - 1) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                 }
             }
 
@@ -138,14 +147,12 @@ fun PinEntryScreen(
                 Spacer(Modifier.height(12.dp))
             }
 
-            // Backspace mass clear & optional forgot PIN
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = {
-                    // Clear all digits
                     for (i in 0 until boxCount) digits[i] = ""
                     focusRequesters[0].requestFocus()
                     localError = false
