@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -95,12 +97,14 @@ fun ForgotPasswordScreen(
                         Button(
                             onClick = {
                                 errorMessage = null
-                                val res = auth.requestPasswordReset(email)
-                                if (res.isSuccess) {
-                                    scope.launch { snackbarHostState.showSnackbar("Verification code sent") }
-                                    step = 2
-                                } else {
-                                    errorMessage = res.exceptionOrNull()?.message
+                                scope.launch {
+                                    val res = auth.requestPasswordReset(email)
+                                    if (res.isSuccess) {
+                                        snackbarHostState.showSnackbar("Verification code sent")
+                                        step = 2
+                                    } else {
+                                        errorMessage = res.exceptionOrNull()?.message
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -123,11 +127,21 @@ fun ForgotPasswordScreen(
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
+                        var newPasswordVisible by remember { mutableStateOf(false) }
                         OutlinedTextField(
                             value = newPassword,
                             onValueChange = { newPassword = it },
                             placeholder = { Text("New Password (min 6 characters)") },
-                            visualTransformation = PasswordVisualTransformation(),
+                            visualTransformation = if (newPasswordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { newPasswordVisible = !newPasswordVisible }) {
+                                    Icon(
+                                        imageVector = if (newPasswordVisible) androidx.compose.material.icons.Icons.Filled.Visibility else androidx.compose.material.icons.Icons.Filled.VisibilityOff,
+                                        contentDescription = if (newPasswordVisible) "Hide password" else "Show password",
+                                        tint = Color(0xFF738A45)
+                                    )
+                                }
+                            },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                             shape = RoundedCornerShape(8.dp),
@@ -143,12 +157,14 @@ fun ForgotPasswordScreen(
                         Button(
                             onClick = {
                                 errorMessage = null
-                                val res = auth.resetPassword(email, code, newPassword)
-                                if (res.isSuccess) {
-                                    scope.launch { snackbarHostState.showSnackbar("Password reset successful") }
-                                    onResetSuccess()
-                                } else {
-                                    errorMessage = res.exceptionOrNull()?.message
+                                scope.launch {
+                                    val res = auth.resetPassword(email, code, newPassword)
+                                    if (res.isSuccess) {
+                                        snackbarHostState.showSnackbar("Password reset successful")
+                                        onResetSuccess()
+                                    } else {
+                                        errorMessage = res.exceptionOrNull()?.message
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(48.dp),

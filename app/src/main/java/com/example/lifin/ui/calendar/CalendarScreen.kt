@@ -71,6 +71,8 @@ fun CalendarScreen(
         ) {
             // Health Curve Chart - PALING ATAS
             item {
+                Spacer(modifier = Modifier.height(24.dp))
+                
                 Text(
                     "Health Curve",
                     fontSize = 18.sp,
@@ -347,22 +349,25 @@ fun HealthCurveChart() {
                     .fillMaxWidth()
                     .height(150.dp)
             ) {
-                // Y-axis labels - Berat Badan (10-150)
+                // Y-axis labels - Tinggi Badan (100-170) - KIRI
                 Column(
                     modifier = Modifier
-                        .width(28.dp)
+                        .width(32.dp)
                         .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.End
                 ) {
-                    Text("150", fontSize = 8.sp, color = Color.Gray)
-                    Text("130", fontSize = 8.sp, color = Color.Gray)
-                    Text("110", fontSize = 8.sp, color = Color.Gray)
-                    Text("90", fontSize = 8.sp, color = Color.Gray)
-                    Text("70", fontSize = 8.sp, color = Color.Gray)
-                    Text("50", fontSize = 8.sp, color = Color.Gray)
-                    Text("30", fontSize = 8.sp, color = Color.Gray)
-                    Text("10", fontSize = 8.sp, color = Color.Gray)
+                    Text("170", fontSize = 10.sp, color = Color(0xFF56AAFF), fontWeight = FontWeight.Medium)
+                    Text("160", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                    Text("150", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                    Text("140", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                    Text("130", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                    Text("120", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                    Text("110", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                    Text("100", fontSize = 10.sp, color = Color(0xFF56AAFF), fontWeight = FontWeight.Medium)
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Chart bars - DATA REAL dari input user
                 Row(
@@ -405,21 +410,24 @@ fun HealthCurveChart() {
                     }
                 }
 
-                // Y-axis labels - Tinggi Badan (100-200)
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Y-axis labels - Berat Badan (10-80) - KANAN
                 Column(
                     modifier = Modifier
-                        .width(28.dp)
+                        .width(32.dp)
                         .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.Start
                 ) {
-                    Text("200", fontSize = 8.sp, color = Color.Gray)
-                    Text("185", fontSize = 8.sp, color = Color.Gray)
-                    Text("170", fontSize = 8.sp, color = Color.Gray)
-                    Text("155", fontSize = 8.sp, color = Color.Gray)
-                    Text("140", fontSize = 8.sp, color = Color.Gray)
-                    Text("125", fontSize = 8.sp, color = Color.Gray)
-                    Text("110", fontSize = 8.sp, color = Color.Gray)
-                    Text("100", fontSize = 8.sp, color = Color.Gray)
+                    Text("80", fontSize = 10.sp, color = Color(0xFFFF5699), fontWeight = FontWeight.Medium)
+                    Text("70", fontSize = 10.sp, color = Color(0xFFFF5699))
+                    Text("60", fontSize = 10.sp, color = Color(0xFFFF5699))
+                    Text("50", fontSize = 10.sp, color = Color(0xFFFF5699))
+                    Text("40", fontSize = 10.sp, color = Color(0xFFFF5699))
+                    Text("30", fontSize = 10.sp, color = Color(0xFFFF5699))
+                    Text("20", fontSize = 10.sp, color = Color(0xFFFF5699))
+                    Text("10", fontSize = 10.sp, color = Color(0xFFFF5699), fontWeight = FontWeight.Medium)
                 }
             }
 

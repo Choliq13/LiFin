@@ -43,125 +43,137 @@ fun PinEntryScreen(
             .background(Color(0xFF1E1E1E)),
         contentAlignment = Alignment.Center
     ) {
-        Column(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF2C2C2C)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Text(
-                text = title,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = subtitle,
-                fontSize = 14.sp,
-                color = Color(0xFFB0B0B0)
-            )
-            Spacer(Modifier.height(28.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                repeat(boxCount) { index ->
-                    OutlinedTextField(
-                        value = digits[index],
-                        onValueChange = { ch ->
-                            if (ch.length <= 1 && ch.all { it.isDigit() }) {
-                                digits[index] = ch
-                                if (ch.isNotEmpty()) {
-                                    if (index < boxCount - 1) {
-                                        focusRequesters[index + 1].requestFocus()
-                                    } else {
-                                        if (currentPin().length == boxCount) {
-                                            onPinComplete(currentPin())
+                Text(
+                    text = title,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 14.sp,
+                    color = Color(0xFFB0B0B0),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(boxCount) { index ->
+                        OutlinedTextField(
+                            value = digits[index],
+                            onValueChange = { ch ->
+                                if (ch.length <= 1 && ch.all { it.isDigit() }) {
+                                    digits[index] = ch
+                                    if (ch.isNotEmpty()) {
+                                        if (index < boxCount - 1) {
+                                            focusRequesters[index + 1].requestFocus()
+                                        } else {
+                                            if (currentPin().length == boxCount) {
+                                                onPinComplete(currentPin())
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        },
-                        modifier = Modifier
-                            .width(48.dp)
-                            .height(56.dp)
-                            .focusRequester(focusRequesters[index])
-                            .onKeyEvent { e ->
-                                val isBackspace =
-                                    e.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DEL
-                                if (isBackspace) {
-                                    if (digits[index].isEmpty() && index > 0) {
-                                        digits[index - 1] = ""
-                                        focusRequesters[index - 1].requestFocus()
-                                    } else if (digits[index].isNotEmpty()) {
-                                        digits[index] = ""
-                                    }
-                                    true
-                                } else false
                             },
-                        singleLine = true,
-                        readOnly = false,
-                        maxLines = 1,
-                        textStyle = LocalTextStyle.current.copy(
-                            textAlign = TextAlign.Center,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFFFFFF)
-                        ),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (localError) Color.Red else Color(0xFF4CAF50),
-                            unfocusedBorderColor = if (localError) Color.Red else Color(0xFF3D3D3D),
-                            focusedContainerColor = Color(0xFF2C2C2C),
-                            unfocusedContainerColor = Color(0xFF2C2C2C),
-                            cursorColor = Color(0xFF4CAF50),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
+                            modifier = Modifier
+                                .width(42.dp)
+                                .height(56.dp)
+                                .focusRequester(focusRequesters[index])
+                                .onKeyEvent { e ->
+                                    val isBackspace =
+                                        e.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DEL
+                                    if (isBackspace) {
+                                        if (digits[index].isEmpty() && index > 0) {
+                                            digits[index - 1] = ""
+                                            focusRequesters[index - 1].requestFocus()
+                                        } else if (digits[index].isNotEmpty()) {
+                                            digits[index] = ""
+                                        }
+                                        true
+                                    } else false
+                                },
+                            singleLine = true,
+                            readOnly = false,
+                            maxLines = 1,
+                            textStyle = LocalTextStyle.current.copy(
+                                textAlign = TextAlign.Center,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFFFFFF)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (localError) Color.Red else Color(0xFF4CAF50),
+                                unfocusedBorderColor = if (localError) Color.Red.copy(alpha = 0.5f) else Color(0xFF3D3D3D),
+                                focusedContainerColor = Color(0xFF3A3A3A),
+                                unfocusedContainerColor = Color(0xFF353535),
+                                cursorColor = Color(0xFF4CAF50),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Next
                         ),
                         keyboardActions = KeyboardActions(onNext = {}),
-                        placeholder = {},
-                        isError = localError
-                    )
-
-                    if (index < boxCount - 1) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                            placeholder = {},
+                            isError = localError
+                        )
                     }
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(24.dp))
 
-            if (localError) {
-                Text(
-                    text = "PIN salah, coba lagi",
-                    color = Color.Red,
-                    fontSize = 14.sp
-                )
-                Spacer(Modifier.height(12.dp))
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = {
-                    for (i in 0 until boxCount) digits[i] = ""
-                    focusRequesters[0].requestFocus()
-                    localError = false
-                }) {
-                    Text("Hapus", color = Color.White, fontSize = 14.sp)
+                if (localError) {
+                    Text(
+                        text = "PIN salah, coba lagi",
+                        color = Color.Red,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(16.dp))
                 }
-                if (onForgotPin != null) {
-                    TextButton(onClick = onForgotPin) {
-                        Text("Lupa PIN?", color = Color(0xFF4CAF50), fontSize = 14.sp)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = {
+                        for (i in 0 until boxCount) digits[i] = ""
+                        focusRequesters[0].requestFocus()
+                        localError = false
+                    }) {
+                        Text("Hapus", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    }
+                    if (onForgotPin != null) {
+                        TextButton(onClick = onForgotPin) {
+                            Text("Lupa PIN?", color = Color(0xFF4CAF50), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
             }

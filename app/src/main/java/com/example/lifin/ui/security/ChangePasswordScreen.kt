@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,12 +28,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChangePasswordScreen(
     onNavigateBack: () -> Unit,
-    onPasswordChanged: () -> Unit
+    onPasswordChanged: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit = {}
 ) {
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showForgotPassword by remember { mutableStateOf(false) }
     var isSubmitting by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -105,9 +109,23 @@ fun ChangePasswordScreen(
                         Text(
                             text = errorMessage!!,
                             color = Color.Red,
-                            fontSize = 14.sp,  // Diperbesar dari 12sp ke 14sp
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
+                    }
+                    
+                    if (showForgotPassword) {
+                        TextButton(
+                            onClick = onNavigateToForgotPassword,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Lupa Password?",
+                                color = Color(0xFF738A45),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     Button(
@@ -126,20 +144,30 @@ fun ChangePasswordScreen(
                                     errorMessage = "Konfirmasi password tidak cocok"
                                 }
                                 else -> {
-                                    // Integrasi stub AuthRepository
-                                    val result = com.example.lifin.data.repository.AuthRepository(context).changePassword(currentPassword, newPassword)
-                                    if (result.isSuccess) {
-                                        scope.launch { snackbarHostState.showSnackbar("Password berhasil diubah") }
-                                        onPasswordChanged()
-                                    } else {
-                                        errorMessage = result.exceptionOrNull()?.message ?: "Gagal mengubah password"
+                                    // Integrasi dengan Supabase AuthRepository
+                                    scope.launch {
+                                        val result = com.example.lifin.data.repository.AuthRepository(context).changePassword(currentPassword, newPassword)
+                                        if (result.isSuccess) {
+                                            snackbarHostState.showSnackbar("Password berhasil diubah")
+                                            showForgotPassword = false
+                                            onPasswordChanged()
+                                        } else {
+                                            val error = result.exceptionOrNull()?.message ?: "Gagal mengubah password"
+                                            errorMessage = error
+                                            // Jika password lama salah, tampilkan tombol lupa password
+                                            if (error.contains("salah", ignoreCase = true) || error.contains("incorrect", ignoreCase = true) || error.contains("current", ignoreCase = true)) {
+                                                showForgotPassword = true
+                                            }
+                                        }
+                                        isSubmitting = false
                                     }
+                                    return@Button
                                 }
                             }
                             if (errorMessage != null) {
                                 scope.launch { snackbarHostState.showSnackbar(errorMessage!!) }
+                                isSubmitting = false
                             }
-                            isSubmitting = false
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),  // Diperbesar dari 48dp ke 56dp
                         shape = RoundedCornerShape(50.dp),  // Lebih rounded
@@ -160,31 +188,42 @@ fun ChangePasswordScreen(
 
 @Composable
 private fun PasswordField(label: String, value: String, onChange: (String) -> Unit) {
+    var passwordVisible by remember { mutableStateOf(false) }
+    
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
-            fontSize = 16.sp,  // Diperbesar dari 12sp ke 16sp
-            fontWeight = FontWeight.SemiBold,  // Bold untuk lebih terlihat
-            color = Color(0xFF293E00)  // Warna hijau tua yang kontras
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF293E00)
         )
         OutlinedTextField(
             value = value,
             onValueChange = onChange,
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next
             ),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) androidx.compose.material.icons.Icons.Filled.Visibility else androidx.compose.material.icons.Icons.Filled.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                        tint = Color(0xFF738A45)
+                    )
+                }
+            },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF738A45),
                 unfocusedBorderColor = Color(0xFF738A45).copy(alpha = 0.5f),
                 focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color(0xFFF5F9F3)  // Background hijau muda
+                unfocusedContainerColor = Color(0xFFF5F9F3)
             ),
             textStyle = LocalTextStyle.current.copy(
-                fontSize = 16.sp,  // Text input lebih besar
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF293E00)
             ),

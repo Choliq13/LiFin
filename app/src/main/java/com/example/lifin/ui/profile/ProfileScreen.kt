@@ -1,5 +1,6 @@
 package com.example.lifin.ui.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,11 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import android.content.Context
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -60,50 +66,136 @@ fun ProfileScreen(
     val primaryColor = Color(0xFF293E00)
     val backgroundColor = Color(0xFFF0F9E9)
 
-    Box(modifier = Modifier.fillMaxSize().background(backgroundColor)) {
-        Image(
-            painter = painterResource(id = R.drawable.bglanding),
-            contentDescription = "Background",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().height(200.dp).align(Alignment.TopCenter)
-        )
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(
+                selected = BottomNavItem.Profile,
+                onHome = onNavigateToHome,
+                onCalendar = onNavigateToCalendar,
+                onProfile = onNavigateToProfile,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        },
+        containerColor = Color.White,
+        snackbarHost = { SnackbarHost(snackbarHost) }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Background image - Full screen (akan tertutup saat scroll)
+            Image(
+                painter = painterResource(id = R.drawable.bglanding),
+                contentDescription = "Background",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.TopCenter)
+            )
 
-        Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {
-                TopAppBar(
-                    title = { Text("Profil", fontWeight = FontWeight.Bold, color = primaryColor) },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-                )
-            },
-            bottomBar = {
-                BottomNavigationBar(
-                    selected = BottomNavItem.Profile,
-                    onHome = onNavigateToHome,
-                    onCalendar = onNavigateToCalendar,
-                    onProfile = onNavigateToProfile,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                )
-            },
-            snackbarHost = { SnackbarHost(snackbarHost) }
-        ) { padding ->
+            // Profile header di tengah bagian atas (fixed position)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(350.dp)
+                    .align(Alignment.TopCenter),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                ) {
+                    val fullName = prefs.getProfileName().ifBlank { "Pengguna Baru" }
+                    val avatarIndex = prefs.getProfileAvatarIndex()
+                    val avatarColors = remember {
+                        listOf(
+                            Color(0xFFFFCDD2), Color(0xFFF8BBD0), Color(0xFFBBDEFB), Color(0xFFC8E6C9),
+                            Color(0xFFFFF9C4), Color(0xFFD1C4E9), Color(0xFFFFE0B2)
+                        )
+                    }
+
+                    // Avatar with white background
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(110.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (avatarIndex >= 0) avatarColors[avatarIndex.coerceIn(0, avatarColors.lastIndex)]
+                                    else Color.LightGray
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Filled.Face,
+                                contentDescription = "Avatar",
+                                tint = Color(0xFF37474F),
+                                modifier = Modifier.size(70.dp)
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Name with white background
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.White.copy(alpha = 0.95f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Text(
+                            fullName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                            color = primaryColor,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                        )
+                    }
+                }
+            }
+
+            // Scrollable Content dengan background F0F9E9
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp)
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 item {
-                    ProfileHeader(prefs, primaryColor)
-                    Spacer(modifier = Modifier.height(24.dp))
-                    ProfileMenuGroup(
-                        prefs = prefs,
-                        scope = scope,
-                        snackbarHost = snackbarHost,
-                        onNavigateToEditProfile = onNavigateToEditProfile,
-                        onNavigateToChangePassword = onNavigateToChangePassword,
-                        onLogoutClick = { showLogoutDialog = true },
-                        primaryColor = primaryColor
-                    )
+                    // Spacer transparan untuk profile header area
+                    Spacer(modifier = Modifier.height(350.dp))
+                }
+                
+                item {
+                    // Card besar dengan background F0F9E9 yang menutupi background
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                        color = backgroundColor
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .padding(top = 32.dp, bottom = 24.dp)
+                        ) {
+                            ProfileMenuGroup(
+                                prefs = prefs,
+                                scope = scope,
+                                snackbarHost = snackbarHost,
+                                onNavigateToEditProfile = onNavigateToEditProfile,
+                                onNavigateToChangePassword = onNavigateToChangePassword,
+                                onLogoutClick = { showLogoutDialog = true },
+                                primaryColor = primaryColor
+                            )
+                        }
+                    }
                 }
             }
 
@@ -137,50 +229,6 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileHeader(prefs: com.example.lifin.data.local.EncryptedPreferences, primaryColor: Color) {
-    val fullName = prefs.getProfileName().ifBlank { "Pengguna Baru" }
-    val avatarIndex = prefs.getProfileAvatarIndex()
-    val avatarColors = remember {
-        listOf(
-            Color(0xFFFFCDD2), Color(0xFFF8BBD0), Color(0xFFBBDEFB), Color(0xFFC8E6C9),
-            Color(0xFFFFF9C4), Color(0xFFD1C4E9), Color(0xFFFFE0B2)
-        )
-    }
-
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp, horizontal = 24.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (avatarIndex >= 0) avatarColors[avatarIndex.coerceIn(0, avatarColors.lastIndex)]
-                        else Color.LightGray
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Filled.Face,
-                    contentDescription = "Avatar",
-                    tint = Color(0xFF37474F),
-                    modifier = Modifier.size(60.dp)
-                )
-            }
-            Text(fullName, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = primaryColor)
-        }
-    }
-}
-
-@Composable
 private fun ProfileMenuGroup(
     prefs: com.example.lifin.data.local.EncryptedPreferences,
     scope: CoroutineScope,
@@ -193,17 +241,18 @@ private fun ProfileMenuGroup(
     var notificationEnabled by remember { mutableStateOf(prefs.isNotificationEnabled()) }
     var notifHour by remember { mutableStateOf(prefs.getNotificationHour()) }
     var notifMinute by remember { mutableStateOf(prefs.getNotificationMinute()) }
+    var showTimePickerDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Single Card with all menu items
     Card(
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp, bottomStart = 24.dp, bottomEnd = 24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F9F3)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 24.dp, horizontal = 20.dp),
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ProfileMenuItem(
@@ -240,6 +289,40 @@ private fun ProfileMenuGroup(
                     )
                 }
             )
+            
+            ProfileMenuItem(
+                icon = Icons.Default.Schedule,
+                text = "Atur Waktu Notifikasi",
+                onClick = { showTimePickerDialog = true },
+                primaryColor = primaryColor,
+                trailingContent = {
+                    Text(
+                        text = String.format("%02d:%02d", notifHour, notifMinute),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF293E00)
+                    )
+                }
+            )
+            
+            // Tombol Test Notifikasi - hanya muncul jika notifikasi aktif
+            if (notificationEnabled) {
+                ProfileMenuItem(
+                    icon = Icons.Default.NotificationsActive,
+                    text = "Test Notifikasi",
+                    onClick = {
+                        // Trigger notifikasi langsung untuk testing
+                        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                        com.example.lifin.notification.NotificationHelper.ensureChannel(context)
+                        notificationManager.notify(
+                            com.example.lifin.notification.NotificationHelper.NOTIFICATION_ID,
+                            com.example.lifin.notification.NotificationHelper.buildNotification(context)
+                        )
+                        scope.launch { snackbarHost.showSnackbar("Notifikasi test dikirim!") }
+                    },
+                    primaryColor = primaryColor
+                )
+            }
 
             ProfileMenuItem(
                 icon = Icons.Default.Lock,
@@ -248,6 +331,32 @@ private fun ProfileMenuGroup(
                 primaryColor = primaryColor
             )
         }
+    }
+    
+    // Time Picker Dialog
+    if (showTimePickerDialog) {
+        TimePickerDialog(
+            initialHour = notifHour,
+            initialMinute = notifMinute,
+            onDismiss = { showTimePickerDialog = false },
+            onConfirm = { hour, minute ->
+                notifHour = hour
+                notifMinute = minute
+                prefs.setNotificationTime(hour, minute)
+                showTimePickerDialog = false
+                
+                // Matikan notifikasi dan cancel alarm yang ada
+                if (notificationEnabled) {
+                    notificationEnabled = false
+                    prefs.setNotificationEnabled(false)
+                    com.example.lifin.notification.NotificationHelper.cancelDaily(context)
+                }
+                
+                scope.launch { 
+                    snackbarHost.showSnackbar("Waktu diatur ke ${String.format("%02d:%02d", hour, minute)}. Aktifkan notifikasi untuk menjadwalkan.") 
+                }
+            }
+        )
     }
 
     Spacer(modifier = Modifier.height(20.dp))
@@ -284,37 +393,37 @@ private fun ProfileMenuItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFF5F9F3))
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 18.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier.weight(1f)
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(primaryColor.copy(alpha = 0.15f)),
+                    .background(primaryColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     icon,
                     contentDescription = text,
                     tint = primaryColor,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
             Text(
                 text,
-                color = Color(0xFF2D3E1F),
+                color = Color(0xFF293E00),
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp
+                fontSize = 16.sp
             )
         }
 
@@ -329,6 +438,90 @@ private fun ProfileMenuItem(
             )
         }
     }
+}
+
+@Composable
+private fun TimePickerDialog(
+    initialHour: Int,
+    initialMinute: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int, Int) -> Unit
+) {
+    var selectedHour by remember { mutableStateOf(initialHour) }
+    var selectedMinute by remember { mutableStateOf(initialMinute) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Atur Waktu Notifikasi",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF293E00)
+            )
+        },
+        text = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Hour Picker
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(onClick = { selectedHour = (selectedHour + 1) % 24 }) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Increase hour")
+                    }
+                    Text(
+                        text = String.format("%02d", selectedHour),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF293E00)
+                    )
+                    IconButton(onClick = { selectedHour = if (selectedHour == 0) 23 else selectedHour - 1 }) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Decrease hour")
+                    }
+                }
+                
+                Text(
+                    text = ":",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                
+                // Minute Picker
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(onClick = { selectedMinute = (selectedMinute + 1) % 60 }) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Increase minute")
+                    }
+                    Text(
+                        text = String.format("%02d", selectedMinute),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF293E00)
+                    )
+                    IconButton(onClick = { selectedMinute = if (selectedMinute == 0) 59 else selectedMinute - 1 }) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Decrease minute")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(selectedHour, selectedMinute) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF738A45))
+            ) {
+                Text("Simpan", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Batal", color = Color(0xFF293E00))
+            }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp)
+    )
 }
 
 private fun scheduleDailyNotification(
@@ -358,10 +551,13 @@ private fun LogoutDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val primaryColor = Color(0xFF293E00)
+    val backgroundColor = Color(0xFFF5F9F3)
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(24.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = Color.White,
         title = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -370,7 +566,7 @@ private fun LogoutDialog(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = "Logout Icon",
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = Color(0xFF8FA876),
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -378,7 +574,7 @@ private fun LogoutDialog(
                     "Konfirmasi Keluar",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = primaryColor
                 )
             }
         },
@@ -387,38 +583,43 @@ private fun LogoutDialog(
                 "Anda yakin ingin keluar dari akun ini?",
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.Black.copy(alpha = 0.7f)
             )
         },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 enabled = !isProcessing,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
+                    containerColor = Color(0xFF8FA876),
+                    contentColor = Color.White
                 )
             ) {
                 if (isProcessing) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onError,
+                        color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Ya, Keluar")
+                    Text("Ya, Keluar", fontWeight = FontWeight.SemiBold)
                 }
             }
         },
         dismissButton = {
-            TextButton(
+            OutlinedButton(
                 onClick = onDismiss,
                 enabled = !isProcessing,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(50.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = primaryColor
+                ),
+                border = BorderStroke(1.dp, primaryColor)
             ) {
-                Text("Batal")
+                Text("Batal", fontWeight = FontWeight.SemiBold)
             }
         }
     )

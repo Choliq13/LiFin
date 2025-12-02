@@ -70,6 +70,8 @@ fun EditProfileScreen(
         cursorColor = primaryColor,
         focusedLabelColor = primaryColor,
         unfocusedLabelColor = primaryColor.copy(alpha = 0.8f),
+        focusedTextColor = Color.Black,
+        unfocusedTextColor = Color.Black,
         focusedTrailingIconColor = primaryColor,
         unfocusedTrailingIconColor = primaryColor.copy(alpha = 0.7f),
         disabledTrailingIconColor = primaryColor.copy(alpha = 0.7f)
@@ -79,7 +81,7 @@ fun EditProfileScreen(
         Color(0xFFFFCDD2), Color(0xFFF8BBD0), Color(0xFFBBDEFB), Color(0xFFC8E6C9),
         Color(0xFFFFF9C4), Color(0xFFD1C4E9), Color(0xFFFFE0B2)
     )
-    val genderOptions = listOf("Laki-laki", "Perempuan", "Lainnya")
+    val genderOptions = listOf("Laki-laki", "Perempuan", "Tidak memilih")
 
     fun openDatePicker() {
         val cal = Calendar.getInstance()
@@ -90,12 +92,28 @@ fun EditProfileScreen(
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(backgroundColor)) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image - 40% atas
         Image(
             painter = painterResource(id = R.drawable.bglanding),
             contentDescription = "Background",
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().height(200.dp).align(Alignment.TopCenter)
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.4f)
+                .align(Alignment.TopCenter)
+        )
+        
+        // Background putih dengan lengkungan atas
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.65f)
+                .align(Alignment.BottomCenter)
+                .background(
+                    color = backgroundColor,
+                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                )
         )
 
         Scaffold(
@@ -199,44 +217,76 @@ fun EditProfileScreen(
                             Spacer(modifier = Modifier.height(20.dp))
 
                             // Tanggal lahir
-                            OutlinedTextField(
-                                value = if (dob.isNotBlank()) dob else "",
-                                onValueChange = {},
-                                label = { Text("Tanggal Lahir") },
-                                readOnly = true,
-                                trailingIcon = { Icon(Icons.Filled.CalendarToday, contentDescription = "Pick Date") },
-                                modifier = Modifier.fillMaxWidth().clickable(onClick = ::openDatePicker),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = fieldColors
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = ::openDatePicker)
+                            ) {
+                                OutlinedTextField(
+                                    value = if (dob.isNotBlank()) dob else "",
+                                    onValueChange = {},
+                                    label = { Text("Tanggal Lahir") },
+                                    readOnly = true,
+                                    enabled = false,
+                                    trailingIcon = { 
+                                        Icon(
+                                            Icons.Filled.CalendarToday, 
+                                            contentDescription = "Pick Date"
+                                        ) 
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = TextFieldDefaults.colors(
+                                        disabledContainerColor = fieldContainerColor,
+                                        disabledIndicatorColor = primaryColor.copy(alpha = 0.7f),
+                                        disabledLabelColor = primaryColor.copy(alpha = 0.8f),
+                                        disabledTextColor = primaryColor,
+                                        disabledTrailingIconColor = primaryColor
+                                    )
+                                )
+                            }
                             Spacer(modifier = Modifier.height(20.dp))
 
                             // Gender dropdown
-                            Box(modifier = Modifier.fillMaxWidth()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showGenderDropdown = !showGenderDropdown }
+                            ) {
                                 OutlinedTextField(
                                     value = gender,
                                     onValueChange = {},
                                     label = { Text("Jenis Kelamin") },
                                     readOnly = true,
+                                    enabled = false,
                                     trailingIcon = {
                                         Icon(
                                             if (showGenderDropdown) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                             contentDescription = "Toggle Gender"
                                         )
                                     },
-                                    modifier = Modifier.fillMaxWidth().clickable { showGenderDropdown = !showGenderDropdown },
+                                    modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = fieldColors
+                                    colors = TextFieldDefaults.colors(
+                                        disabledContainerColor = fieldContainerColor,
+                                        disabledIndicatorColor = primaryColor.copy(alpha = 0.7f),
+                                        disabledLabelColor = primaryColor.copy(alpha = 0.8f),
+                                        disabledTextColor = primaryColor,
+                                        disabledTrailingIconColor = primaryColor
+                                    )
                                 )
                                 DropdownMenu(
                                     expanded = showGenderDropdown,
                                     onDismissRequest = { showGenderDropdown = false },
-                                    modifier = Modifier.fillMaxWidth().background(fieldContainerColor)
+                                    modifier = Modifier.background(fieldContainerColor)
                                 ) {
                                     genderOptions.forEach { opt ->
                                         DropdownMenuItem(
                                             text = { Text(opt, color = primaryColor) },
-                                            onClick = { gender = opt; showGenderDropdown = false }
+                                            onClick = { 
+                                                gender = opt
+                                                showGenderDropdown = false
+                                            }
                                         )
                                     }
                                 }

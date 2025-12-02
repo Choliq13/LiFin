@@ -105,7 +105,7 @@ class EncryptedPreferences(context: Context) {
     fun getProfileDob(): String? = prefs.getString(KEY_PROFILE_DOB, null)
 
     fun setProfileGender(gender: String) { prefs.edit().putString(KEY_PROFILE_GENDER, gender).apply() }
-    fun getProfileGender(): String = prefs.getString(KEY_PROFILE_GENDER, "Unspecified") ?: "Unspecified"
+    fun getProfileGender(): String = prefs.getString(KEY_PROFILE_GENDER, "") ?: ""
 
     fun setProfileHeightCm(height: Int) { prefs.edit().putInt(KEY_PROFILE_HEIGHT_CM, height).apply() }
     fun getProfileHeightCm(): Int = prefs.getInt(KEY_PROFILE_HEIGHT_CM, 0)

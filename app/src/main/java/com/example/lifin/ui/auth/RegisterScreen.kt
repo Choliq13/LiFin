@@ -17,6 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lifin.R
@@ -143,6 +146,7 @@ fun RegisterScreen(
                     )
 
                     // Password Field
+                    var passwordVisible by remember { mutableStateOf(false) }
                     OutlinedTextField(
                         value = password,
                         onValueChange = {
@@ -150,7 +154,16 @@ fun RegisterScreen(
                             errorMessage = null
                         },
                         placeholder = { Text("Password", color = Color(0xFFB7B4B4)) },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) androidx.compose.material.icons.Icons.Filled.Visibility else androidx.compose.material.icons.Icons.Filled.VisibilityOff,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                    tint = Color(0xFF738A45)
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF738A45),
@@ -167,6 +180,7 @@ fun RegisterScreen(
                     )
 
                     // Konfirmasi Password Field
+                    var confirmPasswordVisible by remember { mutableStateOf(false) }
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = {
@@ -174,7 +188,16 @@ fun RegisterScreen(
                             errorMessage = null
                         },
                         placeholder = { Text("Konfirmasi Password", color = Color(0xFFB7B4B4)) },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (confirmPasswordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) androidx.compose.material.icons.Icons.Filled.Visibility else androidx.compose.material.icons.Icons.Filled.VisibilityOff,
+                                    contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                                    tint = Color(0xFF738A45)
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF738A45),

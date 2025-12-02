@@ -112,25 +112,34 @@ fun PinVerifyScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Masukan PIN",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Black
-                        )
-                    }
+                    Text(
+                        text = "Masukkan PIN",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF293E00),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        text = "Masukkan 6 digit PIN Anda",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Gray,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
                     Row(
-                        modifier = Modifier
-                            .wrapContentWidth()
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         repeat(boxCount) { index ->
@@ -162,28 +171,31 @@ fun PinVerifyScreen(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
                     if (errorMessage != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = errorMessage!!,
                             color = Color.Red,
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     val canSubmit = pinValue().length == boxCount
                     Button(
                         onClick = { submitIfReady() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
+                            .height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF738A45)
+                            containerColor = Color(0xFF738A45),
+                            disabledContainerColor = Color(0xFF738A45).copy(alpha = 0.5f)
                         ),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(12.dp),
                         enabled = canSubmit
                     ) {
                         Text(
@@ -249,7 +261,7 @@ private fun RowScope.SinglePinBox(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier
-            .width(44.dp)      // <<< LEBARENYA DIPERKECIL
+            .width(42.dp)
             .height(56.dp)
             .focusRequester(focusRequester)
             .onKeyEvent { event ->
@@ -264,19 +276,19 @@ private fun RowScope.SinglePinBox(
         maxLines = 1,
         textStyle = LocalTextStyle.current.copy(
             textAlign = TextAlign.Center,
-            fontSize = 20.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF000000)
+            color = Color(0xFF293E00)
         ),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = borderColor,
-            unfocusedBorderColor = borderColor.copy(alpha = 0.6f),
+            unfocusedBorderColor = borderColor.copy(alpha = 0.5f),
             focusedContainerColor = container,
-            unfocusedContainerColor = container,
+            unfocusedContainerColor = Color(0xFFF8F8F8),
             cursorColor = Color(0xFF738A45),
-            focusedTextColor = Color(0xFF000000),
-            unfocusedTextColor = Color(0xFF000000)
+            focusedTextColor = Color(0xFF293E00),
+            unfocusedTextColor = Color(0xFF293E00)
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,

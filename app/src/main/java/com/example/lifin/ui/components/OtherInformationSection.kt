@@ -37,37 +37,29 @@ private data class InfoCardModel(
 
 @Composable
 fun OtherInformationSection() {
-    Text(
-        "Other Information",
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color.Black
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
     val infoCards = listOf(
         InfoCardModel(
             title = "Aktivitas Fisik",
-            icon = R.drawable.anaksenam, // Placeholder icon
-            backgroundColor = Color(0xFFA5D6A7),
+            icon = R.drawable.anaksenam,
+            backgroundColor = Color(0xFFFF9B9B), // Pink - sama dengan Aktivitas di Health Metrics
             content = { AktivitasFisikContent() }
         ),
         InfoCardModel(
             title = "Gula Darah",
-            icon = R.drawable.ukuran, // Placeholder icon
-            backgroundColor = Color(0xFF90CAF9),
+            icon = R.drawable.ukuran,
+            backgroundColor = Color(0xFF7DD8C4), // Turquoise - tetap sama
             content = { GulaDarahContent() }
         ),
         InfoCardModel(
             title = "Tekanan Darah",
-            icon = R.drawable.termometer, // Placeholder icon
-            backgroundColor = Color(0xFFF48FB1),
+            icon = R.drawable.termometer,
+            backgroundColor = Color(0xFF5B9BD5), // Biru tua - sama dengan Tekanan Darah di Health Metrics
             content = { TekananDarahContent() }
         ),
         InfoCardModel(
             title = "Asupan Kalori",
-            icon = R.drawable.brokoli, // Placeholder icon
-            backgroundColor = Color(0xFFFFF176),
+            icon = R.drawable.brokoli,
+            backgroundColor = Color(0xFFB89FD9), // Ungu - sama dengan Nutrisi di Health Metrics
             content = { KaloriContent() }
         )
     )
