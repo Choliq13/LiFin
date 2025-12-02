@@ -143,9 +143,13 @@ class EncryptedPreferences(context: Context) {
 
     // === HEALTH DATA STORAGE ===
     // Menyimpan data kesehatan per tanggal untuk grafik dan history
+    // Sekarang mendukung multiple entries per tanggal dengan timestamp
 
     fun saveHealthData(date: String, data: HealthData) {
-        val key = "health_data_$date"
+        val timestamp = System.currentTimeMillis()
+        val key = "health_data_${date}_$timestamp"
+        
+        // Simpan data dengan timestamp
         prefs.edit().apply {
             putString("${key}_beratBadan", data.beratBadan)
             putString("${key}_tinggiBadan", data.tinggiBadan)
@@ -165,33 +169,56 @@ class EncryptedPreferences(context: Context) {
             // Aktivitas details
             putString("${key}_durasi", data.durasi)
             putString("${key}_jenisAktivitas", data.jenisAktivitas)
+            putLong("${key}_timestamp", timestamp)
             apply()
         }
+        
+        // Tambahkan timestamp ke list untuk tanggal ini
+        val timestampListKey = "health_timestamps_$date"
+        val existingTimestamps = prefs.getStringSet(timestampListKey, emptySet()) ?: emptySet()
+        val updatedTimestamps = existingTimestamps.toMutableSet().apply {
+            add(timestamp.toString())
+        }
+        prefs.edit().putStringSet(timestampListKey, updatedTimestamps).apply()
     }
 
+    // Mendapatkan semua data untuk tanggal tertentu (multiple entries)
+    fun getHealthDataList(date: String): List<Pair<Long, HealthData>> {
+        val timestampListKey = "health_timestamps_$date"
+        val timestamps = prefs.getStringSet(timestampListKey, emptySet()) ?: emptySet()
+        
+        return timestamps.mapNotNull { timestampStr ->
+            val timestamp = timestampStr.toLongOrNull() ?: return@mapNotNull null
+            val key = "health_data_${date}_$timestamp"
+            val beratBadan = prefs.getString("${key}_beratBadan", null)
+            
+            if (beratBadan != null) {
+                val data = HealthData(
+                    beratBadan = beratBadan,
+                    tinggiBadan = prefs.getString("${key}_tinggiBadan", "") ?: "",
+                    tekananDarah = prefs.getString("${key}_tekananDarah", "") ?: "",
+                    gulaDarah = prefs.getString("${key}_gulaDarah", "") ?: "",
+                    aktivitas = prefs.getString("${key}_aktivitas", "") ?: "",
+                    nutrisi = prefs.getString("${key}_nutrisi", "") ?: "",
+                    menuMakanan = prefs.getString("${key}_menuMakanan", "") ?: "",
+                    sesiMakan = prefs.getString("${key}_sesiMakan", "") ?: "",
+                    makananUtama = prefs.getString("${key}_makananUtama", "") ?: "",
+                    makananPendamping = prefs.getString("${key}_makananPendamping", "") ?: "",
+                    karbohidrat = prefs.getString("${key}_karbohidrat", "") ?: "",
+                    protein = prefs.getString("${key}_protein", "") ?: "",
+                    lemak = prefs.getString("${key}_lemak", "") ?: "",
+                    kalori = prefs.getString("${key}_kalori", "") ?: "",
+                    durasi = prefs.getString("${key}_durasi", "") ?: "",
+                    jenisAktivitas = prefs.getString("${key}_jenisAktivitas", "") ?: ""
+                )
+                timestamp to data
+            } else null
+        }.sortedByDescending { it.first } // Sort by timestamp, newest first
+    }
+    
+    // Untuk compatibility dengan fungsi lama (ambil data terbaru saja)
     fun getHealthData(date: String): HealthData? {
-        val key = "health_data_$date"
-        val beratBadan = prefs.getString("${key}_beratBadan", null) ?: return null
-        return HealthData(
-            beratBadan = beratBadan,
-            tinggiBadan = prefs.getString("${key}_tinggiBadan", "") ?: "",
-            tekananDarah = prefs.getString("${key}_tekananDarah", "") ?: "",
-            gulaDarah = prefs.getString("${key}_gulaDarah", "") ?: "",
-            aktivitas = prefs.getString("${key}_aktivitas", "") ?: "",
-            nutrisi = prefs.getString("${key}_nutrisi", "") ?: "",
-            // Nutrisi details
-            menuMakanan = prefs.getString("${key}_menuMakanan", "") ?: "",
-            sesiMakan = prefs.getString("${key}_sesiMakan", "") ?: "",
-            makananUtama = prefs.getString("${key}_makananUtama", "") ?: "",
-            makananPendamping = prefs.getString("${key}_makananPendamping", "") ?: "",
-            karbohidrat = prefs.getString("${key}_karbohidrat", "") ?: "",
-            protein = prefs.getString("${key}_protein", "") ?: "",
-            lemak = prefs.getString("${key}_lemak", "") ?: "",
-            kalori = prefs.getString("${key}_kalori", "") ?: "",
-            // Aktivitas details
-            durasi = prefs.getString("${key}_durasi", "") ?: "",
-            jenisAktivitas = prefs.getString("${key}_jenisAktivitas", "") ?: ""
-        )
+        return getHealthDataList(date).firstOrNull()?.second
     }
 
     // Mendapatkan semua data kesehatan untuk grafik (7 hari terakhir)
@@ -202,17 +229,57 @@ class EncryptedPreferences(context: Context) {
         }
     }
 
-    // Mendapatkan history untuk ditampilkan di calendar
+    // Mendapatkan history untuk ditampilkan di calendar (semua entries)
     fun getAllHealthHistory(): List<HealthHistoryItem> {
         val dates = getHealthNoteDates().sortedDescending()
-        return dates.mapNotNull { date ->
-            getHealthData(date)?.let {
-                HealthHistoryItem(
-                    date = date,
-                    data = it
+        val allHistory = mutableListOf<HealthHistoryItem>()
+        
+        dates.forEach { date ->
+            val dataList = getHealthDataList(date)
+            dataList.forEach { (timestamp, data) ->
+                allHistory.add(
+                    HealthHistoryItem(
+                        date = date,
+                        data = data,
+                        timestamp = timestamp
+                    )
                 )
             }
         }
+        
+        return allHistory.sortedByDescending { it.timestamp }
+    }
+    
+    // Fungsi untuk menyimpan latest health metrics (real-time display)
+    fun saveLatestHealthMetrics(
+        tinggiBadan: String = "",
+        beratBadan: String = "",
+        tekananDarah: String = "",
+        gulaDarah: String = "",
+        nutrisi: String = "",
+        aktivitas: String = ""
+    ) {
+        with(prefs.edit()) {
+            if (tinggiBadan.isNotEmpty()) putString("latest_tinggi_badan", tinggiBadan)
+            if (beratBadan.isNotEmpty()) putString("latest_berat_badan", beratBadan)
+            if (tekananDarah.isNotEmpty()) putString("latest_tekanan_darah", tekananDarah)
+            if (gulaDarah.isNotEmpty()) putString("latest_gula_darah", gulaDarah)
+            if (nutrisi.isNotEmpty()) putString("latest_nutrisi", nutrisi)
+            if (aktivitas.isNotEmpty()) putString("latest_aktivitas", aktivitas)
+            apply()
+        }
+    }
+    
+    // Fungsi untuk mendapatkan latest health metrics
+    fun getLatestHealthMetrics(): LatestHealthMetrics {
+        return LatestHealthMetrics(
+            tinggiBadan = prefs.getString("latest_tinggi_badan", "") ?: "",
+            beratBadan = prefs.getString("latest_berat_badan", "") ?: "",
+            tekananDarah = prefs.getString("latest_tekanan_darah", "") ?: "",
+            gulaDarah = prefs.getString("latest_gula_darah", "") ?: "",
+            nutrisi = prefs.getString("latest_nutrisi", "") ?: "",
+            aktivitas = prefs.getString("latest_aktivitas", "") ?: ""
+        )
     }
 }
 
@@ -240,5 +307,15 @@ data class HealthData(
 
 data class HealthHistoryItem(
     val date: String,
-    val data: HealthData
+    val data: HealthData,
+    val timestamp: Long = 0L
+)
+
+data class LatestHealthMetrics(
+    val tinggiBadan: String = "",
+    val beratBadan: String = "",
+    val tekananDarah: String = "",
+    val gulaDarah: String = "",
+    val nutrisi: String = "",
+    val aktivitas: String = ""
 )

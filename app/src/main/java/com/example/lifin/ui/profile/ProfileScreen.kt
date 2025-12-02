@@ -20,6 +20,9 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import android.content.Context
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -242,7 +245,39 @@ private fun ProfileMenuGroup(
     var notifHour by remember { mutableStateOf(prefs.getNotificationHour()) }
     var notifMinute by remember { mutableStateOf(prefs.getNotificationMinute()) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
+    var pendingNotificationEnable by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    
+    // Permission launcher untuk Android 13+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Check juga SCHEDULE_EXACT_ALARM permission untuk Android 12+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                    // Redirect ke settings untuk enable exact alarm
+                    try {
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        context.startActivity(intent)
+                        scope.launch { snackbarHost.showSnackbar("Mohon izinkan alarm tepat waktu untuk notifikasi") }
+                    } catch (e: Exception) {
+                        scope.launch { snackbarHost.showSnackbar("Gagal membuka pengaturan alarm") }
+                    }
+                    return@rememberLauncherForActivityResult
+                }
+            }
+            
+            notificationEnabled = true
+            prefs.setNotificationEnabled(true)
+            com.example.lifin.notification.NotificationHelper.scheduleDaily(context, notifHour, notifMinute)
+            scope.launch { snackbarHost.showSnackbar("Notifikasi diatur untuk ${String.format("%02d:%02d", notifHour, notifMinute)}") }
+        } else {
+            scope.launch { snackbarHost.showSnackbar("Izin notifikasi diperlukan untuk mengaktifkan pengingat") }
+        }
+        pendingNotificationEnable = false
+    }
 
     // Single Card with all menu items
     Card(
@@ -271,11 +306,19 @@ private fun ProfileMenuGroup(
                     Switch(
                         checked = notificationEnabled,
                         onCheckedChange = { checked ->
-                            notificationEnabled = checked
-                            prefs.setNotificationEnabled(checked)
                             if (checked) {
-                                scheduleDailyNotification(context, notifHour, notifMinute, scope, snackbarHost)
+                                // Request permission untuk Android 13+ (API 33+)
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    // Untuk Android 12 ke bawah, langsung enable
+                                    notificationEnabled = true
+                                    prefs.setNotificationEnabled(true)
+                                    scheduleDailyNotification(context, notifHour, notifMinute, scope, snackbarHost)
+                                }
                             } else {
+                                notificationEnabled = false
+                                prefs.setNotificationEnabled(false)
                                 com.example.lifin.notification.NotificationHelper.cancelDaily(context)
                                 scope.launch { snackbarHost.showSnackbar("Notifikasi harian dinonaktifkan") }
                             }

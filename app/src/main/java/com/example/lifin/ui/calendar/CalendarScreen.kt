@@ -171,15 +171,19 @@ fun CalendarScreen(
                             if (dayNumber in 1..daysInMonth) {
                                 val date = firstOfMonth.withDayOfMonth(dayNumber)
                                 val iso = date.format(formatter)
+                                val today = LocalDate.now()
+                                val hasHealthData = noteDates.contains(iso)
+                                val isPastOrToday = !date.isAfter(today)
+                                
                                 val bg = when {
-                                    loginDateIso == iso -> Color(0xFFFFEB3B) // kuning terang untuk login
-                                    noteDates.contains(iso) -> Color(0xFF8BC34A) // hijau terang untuk note
-                                    else -> Color.White
+                                    hasHealthData -> Color(0xFF8BC34A) // hijau terang - ada health data
+                                    isPastOrToday -> Color(0xFFFFEB3B) // kuning terang - sudah login tapi belum input data
+                                    else -> Color.White // putih - tanggal yang belum tiba
                                 }
                                 val textColor = when {
-                                    loginDateIso == iso -> Color(0xFF000000) // hitam
-                                    noteDates.contains(iso) -> Color.White // putih
-                                    else -> Color(0xFF293E00) // hijau tua
+                                    hasHealthData -> Color.White // putih untuk hijau
+                                    isPastOrToday -> Color(0xFF000000) // hitam untuk kuning
+                                    else -> Color(0xFF293E00) // hijau tua untuk putih
                                 }
                                 Box(
                                     modifier = Modifier
@@ -343,157 +347,152 @@ fun HealthCurveChart() {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Chart with Y-axis
+            // 2 Charts side by side - Tinggi Badan (kiri) dan Berat Badan (kanan)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Y-axis labels - Tinggi Badan (100-170) - KIRI
+                // Chart Tinggi Badan (kiri)
                 Column(
-                    modifier = Modifier
-                        .width(32.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.End
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text("170", fontSize = 10.sp, color = Color(0xFF56AAFF), fontWeight = FontWeight.Medium)
-                    Text("160", fontSize = 10.sp, color = Color(0xFF56AAFF))
-                    Text("150", fontSize = 10.sp, color = Color(0xFF56AAFF))
-                    Text("140", fontSize = 10.sp, color = Color(0xFF56AAFF))
-                    Text("130", fontSize = 10.sp, color = Color(0xFF56AAFF))
-                    Text("120", fontSize = 10.sp, color = Color(0xFF56AAFF))
-                    Text("110", fontSize = 10.sp, color = Color(0xFF56AAFF))
-                    Text("100", fontSize = 10.sp, color = Color(0xFF56AAFF), fontWeight = FontWeight.Medium)
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // Chart bars - DATA REAL dari input user
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    if (healthDataList.isEmpty()) {
-                        // Tampilkan placeholder jika belum ada data
-                        Text(
-                            "Belum ada data.\nInput di Home!",
-                            fontSize = 12.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
-                    } else {
-                        // Tampilkan data real (max 7 hari terakhir)
-                        healthDataList.take(7).forEach { (date, data) ->
-                            val beratBadanValue = data.beratBadan.toFloatOrNull() ?: 0f
-                            val tinggiBadanValue = data.tinggiBadan.toFloatOrNull() ?: 0f
-
-                            // Normalize ke 0-1 range
-                            val beratPercent = ((beratBadanValue - 10f) / (150f - 10f)).coerceIn(0f, 1f)
-                            val tinggiPercent = ((tinggiBadanValue - 100f) / (200f - 100f)).coerceIn(0f, 1f)
-
-                            BarChartItem(
-                                heightPercent = maxOf(beratPercent, tinggiPercent),
-                                color1 = Color(0xFF56AAFF),
-                                color2 = Color(0xFFFF5699)
-                            )
+                    Text(
+                        "Tinggi Badan (cm)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF56AAFF),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                    ) {
+                        // Y-axis Tinggi Badan
+                        Column(
+                            modifier = Modifier
+                                .width(36.dp)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text("200", fontSize = 10.sp, color = Color(0xFF56AAFF), fontWeight = FontWeight.Medium)
+                            Text("180", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                            Text("160", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                            Text("140", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                            Text("120", fontSize = 10.sp, color = Color(0xFF56AAFF))
+                            Text("100", fontSize = 10.sp, color = Color(0xFF56AAFF), fontWeight = FontWeight.Medium)
                         }
-
-                        // Fill remaining bars jika kurang dari 7
-                        repeat(7 - healthDataList.size.coerceAtMost(7)) {
-                            Spacer(modifier = Modifier.width(12.dp))
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Bars Tinggi Badan
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            if (healthDataList.isEmpty()) {
+                                Text(
+                                    "No data",
+                                    fontSize = 10.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.align(Alignment.CenterVertically)
+                                )
+                            } else {
+                                healthDataList.take(7).forEach { (date, data) ->
+                                    val tinggiValue = data.tinggiBadan.toFloatOrNull() ?: 0f
+                                    val tinggiPercent = ((tinggiValue - 100f) / (200f - 100f)).coerceIn(0f, 1f)
+                                    
+                                    SingleBarItem(
+                                        heightPercent = tinggiPercent,
+                                        color = Color(0xFF56AAFF)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // Y-axis labels - Berat Badan (10-80) - KANAN
+                
+                // Chart Berat Badan (kanan)
                 Column(
-                    modifier = Modifier
-                        .width(32.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.Start
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text("80", fontSize = 10.sp, color = Color(0xFFFF5699), fontWeight = FontWeight.Medium)
-                    Text("70", fontSize = 10.sp, color = Color(0xFFFF5699))
-                    Text("60", fontSize = 10.sp, color = Color(0xFFFF5699))
-                    Text("50", fontSize = 10.sp, color = Color(0xFFFF5699))
-                    Text("40", fontSize = 10.sp, color = Color(0xFFFF5699))
-                    Text("30", fontSize = 10.sp, color = Color(0xFFFF5699))
-                    Text("20", fontSize = 10.sp, color = Color(0xFFFF5699))
-                    Text("10", fontSize = 10.sp, color = Color(0xFFFF5699), fontWeight = FontWeight.Medium)
+                    Text(
+                        "Berat Badan (kg)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFF5699),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                    ) {
+                        // Y-axis Berat Badan
+                        Column(
+                            modifier = Modifier
+                                .width(36.dp)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text("150", fontSize = 10.sp, color = Color(0xFFFF5699), fontWeight = FontWeight.Medium)
+                            Text("120", fontSize = 10.sp, color = Color(0xFFFF5699))
+                            Text("90", fontSize = 10.sp, color = Color(0xFFFF5699))
+                            Text("60", fontSize = 10.sp, color = Color(0xFFFF5699))
+                            Text("30", fontSize = 10.sp, color = Color(0xFFFF5699))
+                            Text("10", fontSize = 10.sp, color = Color(0xFFFF5699), fontWeight = FontWeight.Medium)
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Bars Berat Badan
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            if (healthDataList.isEmpty()) {
+                                Text(
+                                    "No data",
+                                    fontSize = 10.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.align(Alignment.CenterVertically)
+                                )
+                            } else {
+                                healthDataList.take(7).forEach { (date, data) ->
+                                    val beratValue = data.beratBadan.toFloatOrNull() ?: 0f
+                                    val beratPercent = ((beratValue - 10f) / (150f - 10f)).coerceIn(0f, 1f)
+                                    
+                                    SingleBarItem(
+                                        heightPercent = beratPercent,
+                                        color = Color(0xFFFF5699)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Legend - Keterangan warna
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Tinggi Badan
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .background(Color(0xFF56AAFF), RoundedCornerShape(2.dp))
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    "Tinggi Badan",
-                    fontSize = 10.sp,
-                    color = Color.Gray
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Berat Badan
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .background(Color(0xFFFF5699), RoundedCornerShape(2.dp))
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    "Berat Badan",
-                    fontSize = 10.sp,
-                    color = Color.Gray
-                )
-            }
         }
     }
 }
 
 @Composable
-fun BarChartItem(heightPercent: Float, color1: Color, color2: Color) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.height(150.dp),
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        // Blue bar
-        Box(
-            modifier = Modifier
-                .width(12.dp)
-                .fillMaxHeight(heightPercent * 0.5f)
-                .background(color1, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        // Pink bar
-        Box(
-            modifier = Modifier
-                .width(12.dp)
-                .fillMaxHeight(heightPercent * 0.5f)
-                .background(color2, RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp))
-        )
-    }
+fun SingleBarItem(heightPercent: Float, color: Color) {
+    Box(
+        modifier = Modifier
+            .width(10.dp)
+            .fillMaxHeight(heightPercent.coerceIn(0.05f, 1f))
+            .background(color, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+    )
 }
 
 @Composable
@@ -657,72 +656,102 @@ fun ProgressStatsSection() {
     val prefs = remember { com.example.lifin.data.local.EncryptedPreferences(context) }
     val healthHistory = remember { prefs.getAllHealthHistory() }
 
-    // Hitung progress dari data yang ada
-    val totalDaysWithData = healthHistory.size
-    val progress = (totalDaysWithData / 30f).coerceAtMost(1f) // Target 30 hari
-    val progressPercent = (progress * 100).toInt()
-
-    // Hitung total aktivitas dan nutrisi
+    // Hitung jumlah data per kategori
+    val totalUmum = healthHistory.count { 
+        it.data.tinggiBadan.isNotEmpty() || it.data.beratBadan.isNotEmpty() || 
+        it.data.tekananDarah.isNotEmpty() || it.data.gulaDarah.isNotEmpty()
+    }
     val totalAktivitas = healthHistory.sumOf {
         it.data.aktivitas.toIntOrNull() ?: 0
     }
-    val totalNutrisi = healthHistory.size // Jumlah hari input nutrisi
+    // Meals hanya dari data nutrisi yang ada isinya
+    val totalMeals = healthHistory.count {
+        it.data.menuMakanan.isNotEmpty() || it.data.karbohidrat.isNotEmpty() || 
+        it.data.protein.isNotEmpty() || it.data.lemak.isNotEmpty() || it.data.kalori.isNotEmpty()
+    }
+
+    // Progress untuk masing-masing kategori (target 30 entries)
+    val umumProgress = (totalUmum / 30f).coerceIn(0f, 1f)
+    val aktivitasProgress = (totalAktivitas / 300f).coerceIn(0f, 1f) // Target 300 menit
+    val nutrisiProgress = (totalMeals / 30f).coerceIn(0f, 1f)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Circular Progress - OTOMATIS DARI DATA
+        // Circular Progress 1 - Umum (Data Kesehatan)
+        CircularProgressWithLabel(
+            progress = umumProgress,
+            value = "$totalUmum",
+            unit = "data",
+            icon = "📊",
+            color = Color(0xFF51E0F9)
+        )
+
+        // Circular Progress 2 - Aktivitas
+        CircularProgressWithLabel(
+            progress = aktivitasProgress,
+            value = "$totalAktivitas",
+            unit = "mnt",
+            icon = "🔥",
+            color = Color(0xFFFF1414)
+        )
+
+        // Circular Progress 3 - Nutrisi (Meals)
+        CircularProgressWithLabel(
+            progress = nutrisiProgress,
+            value = "$totalMeals",
+            unit = "meals",
+            icon = "🍎",
+            color = Color(0xFF9B89FF)
+        )
+    }
+}
+
+@Composable
+fun CircularProgressWithLabel(
+    progress: Float,
+    value: String,
+    unit: String,
+    icon: String,
+    color: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Box(
-            modifier = Modifier.size(140.dp),
+            modifier = Modifier.size(100.dp),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(
                 progress = { progress },
-                modifier = Modifier.size(140.dp),
-                strokeWidth = 12.dp,
-                color = Color(0xFF51E0F9),
+                modifier = Modifier.size(100.dp),
+                strokeWidth = 10.dp,
+                color = color,
                 trackColor = Color(0xFFE0E0E0)
             )
-            CircularProgressIndicator(
-                progress = { progress * 0.75f },
-                modifier = Modifier.size(110.dp),
-                strokeWidth = 12.dp,
-                color = Color(0xFFFF1414),
-                trackColor = Color.Transparent
-            )
             Text(
-                "$progressPercent%",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
+                icon,
+                fontSize = 32.sp
             )
         }
-
-        Spacer(modifier = Modifier.width(20.dp))
-
-        // Stats - DATA REAL
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom
         ) {
-            StatItem(
-                icon = "📊",
-                value = "$totalDaysWithData",
-                unit = "hari",
-                color = Color(0xFF51E0F9)
+            Text(
+                value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = color
             )
-            StatItem(
-                icon = "🔥",
-                value = "$totalAktivitas",
-                unit = "mnt",
-                color = Color(0xFFFF1414)
-            )
-            StatItem(
-                icon = "🍎",
-                value = "$totalNutrisi",
-                unit = "meals",
-                color = Color(0xFF9B89FF)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                unit,
+                fontSize = 12.sp,
+                color = Color.Gray
             )
         }
     }
@@ -800,12 +829,16 @@ fun RealHistoryItem(historyItem: com.example.lifin.data.local.HealthHistoryItem)
 
     // Format tanggal untuk ditampilkan
     val dateFormatter = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id", "ID"))
+    val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
     val date = try {
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(historyItem.date)
     } catch (e: Exception) {
         Date()
     }
     val formattedDate = dateFormatter.format(date ?: Date())
+    val formattedTime = if (historyItem.timestamp > 0) {
+        timeFormatter.format(Date(historyItem.timestamp))
+    } else ""
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -825,12 +858,21 @@ fun RealHistoryItem(historyItem: com.example.lifin.data.local.HealthHistoryItem)
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    formattedDate,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black
-                )
+                Column {
+                    Text(
+                        formattedDate,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black
+                    )
+                    if (formattedTime.isNotEmpty()) {
+                        Text(
+                            "Waktu: $formattedTime",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
 
                 TextButton(onClick = { expanded = !expanded }) {
                     Text(
@@ -863,12 +905,6 @@ fun RealHistoryItem(historyItem: com.example.lifin.data.local.HealthHistoryItem)
                     }
                     if (historyItem.data.gulaDarah.isNotBlank()) {
                         HistoryDetailRow("Gula Darah", "${historyItem.data.gulaDarah} mg/dL")
-                    }
-                    if (historyItem.data.aktivitas.isNotBlank()) {
-                        HistoryDetailRow("Aktivitas", "${historyItem.data.aktivitas} menit")
-                    }
-                    if (historyItem.data.nutrisi.isNotBlank()) {
-                        HistoryDetailRow("Nutrisi", historyItem.data.nutrisi)
                     }
 
                     // Nutrisi details

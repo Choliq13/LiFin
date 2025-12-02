@@ -41,6 +41,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val view = LocalView.current
+            val openPinEntry = intent?.getBooleanExtra("open_pin_entry", false) ?: false
+            
             DisposableEffect(Unit) {
                 val window = (view.context as ComponentActivity).window
                 val insetsController = WindowCompat.getInsetsController(window, view)
@@ -71,6 +73,16 @@ class MainActivity : ComponentActivity() {
                     }
                     val lockManager = remember { AppLockManager.getInstance(this) }
 
+                    // Handle notification click to open PIN entry
+                    DisposableEffect(openPinEntry) {
+                        if (openPinEntry && authRepository.isLoggedIn()) {
+                            navController.navigate(Screen.PinVerify.route) {
+                                launchSingleTop = true
+                            }
+                        }
+                        onDispose {}
+                    }
+                    
                     // Observe app moving to foreground to enforce PIN when needed
                     DisposableEffect(Unit) {
                         val lifecycle = ProcessLifecycleOwner.get().lifecycle

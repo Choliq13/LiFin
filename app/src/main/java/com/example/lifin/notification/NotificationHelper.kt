@@ -25,7 +25,7 @@ object NotificationHelper {
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
             channel.description = "Daily health and weight logging reminders"
 
             // Enable lights
@@ -67,12 +67,21 @@ object NotificationHelper {
                 add(Calendar.DAY_OF_YEAR, 1)
             }
         }
-        alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
-            cal.timeInMillis,
-            AlarmManager.INTERVAL_DAY,
-            pi
-        )
+        
+        // Gunakan setExactAndAllowWhileIdle untuk Android 6+ agar lebih reliable
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                cal.timeInMillis,
+                pi
+            )
+        } else {
+            alarmManager.setExact(
+                AlarmManager.RTC_WAKEUP,
+                cal.timeInMillis,
+                pi
+            )
+        }
     }
 
     fun cancelDaily(context: Context) {
@@ -106,16 +115,30 @@ object NotificationHelper {
 
         // Nada notifikasi default sistem
         val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        
+        // Intent untuk membuka app ke halaman PIN
+        val intent = Intent(context, com.example.lifin.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("open_pin_entry", true) // Flag untuk membuka PIN entry
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("🏥 LiFin - Pengingat Kesehatan")
             .setContentText(randomMessage)
             .setStyle(NotificationCompat.BigTextStyle().bigText(randomMessage))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
             .setVibrate(longArrayOf(0, 500, 200, 500))
-            .setSound(soundUri) // Menambahkan nada dering
+            .setSound(soundUri)
+            .setContentIntent(pendingIntent) // Tambahkan intent saat notifikasi diklik
             .build()
     }
 }

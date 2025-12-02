@@ -68,6 +68,7 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    var latestHealthMetrics by remember { mutableStateOf(prefs.getLatestHealthMetrics()) }
 
     Scaffold(
         bottomBar = {
@@ -310,6 +311,19 @@ fun HomeScreen(
                                             jenisAktivitas = note.jenisAktivitas
                                         )
                                         prefs.saveHealthData(today, healthData)
+                                        
+                                        // Update latest health metrics untuk real-time display
+                                        prefs.saveLatestHealthMetrics(
+                                            tinggiBadan = if (note.tinggiBadan.isNotBlank()) note.tinggiBadan else "",
+                                            beratBadan = if (note.beratBadan.isNotBlank()) note.beratBadan else "",
+                                            tekananDarah = if (note.tekananDarah.isNotBlank()) note.tekananDarah else "",
+                                            gulaDarah = if (note.gulaDarah.isNotBlank()) note.gulaDarah else "",
+                                            nutrisi = if (note.kalori.isNotBlank()) note.kalori else "",
+                                            aktivitas = if (note.aktivitas.isNotBlank()) note.aktivitas else ""
+                                        )
+                                        
+                                        // Refresh state untuk update UI
+                                        latestHealthMetrics = prefs.getLatestHealthMetrics()
 
                                         // Trigger callback untuk menandai tanggal di kalender
                                         onHealthNoteAdded()
@@ -338,13 +352,14 @@ fun HomeScreen(
                                 color = Color(0xFF293E00)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
+                            
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier.fillMaxWidth().height(450.dp)
                             ) {
-                                items(healthMetrics) { metric ->
+                                items(getHealthMetrics(latestHealthMetrics)) { metric ->
                                     HealthMetricCard(metric)
                                 }
                             }
@@ -361,54 +376,15 @@ fun HomeScreen(
                         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                             Spacer(modifier = Modifier.height(24.dp))
                             
-                            // Header Card untuk Other Information
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color.White
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp, vertical = 14.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box {
-                                        // Text dengan outline hitam
-                                        Text(
-                                            text = "Other Information",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Black,
-                                            style = androidx.compose.ui.text.TextStyle(
-                                                drawStyle = Stroke(
-                                                    width = 3f,
-                                                    join = StrokeJoin.Round
-                                                )
-                                            )
-                                        )
-                                        // Text putih di atas
-                                        Text(
-                                            text = "Other Information",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = null,
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
+                            // Judul Other Information
+                            Text(
+                                text = "Other Information",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF293E00)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
                             
-                            Spacer(modifier = Modifier.height(16.dp))
                             OtherInformationSection()
                             Spacer(modifier = Modifier.height(32.dp))
                             // Bottom spacer for nav bar overlap
@@ -503,51 +479,53 @@ data class HealthMetric(
     val icon: Int? = null
 )
 
-// Health metrics data dengan desain profesional
-val healthMetrics = listOf(
-    HealthMetric(
-        value = "160",
-        unit = "cm",
-        label = "Tinggi Badan",
-        backgroundColor = Color(0xFF6BA3D8),
-        icon = R.drawable.jerapah
-    ),
-    HealthMetric(
-        value = "120/80",
-        unit = "mmHg",
-        label = "Tekanan Darah",
-        backgroundColor = Color(0xFF5B9BD5),
-        icon = R.drawable.termometer
-    ),
-    HealthMetric(
-        value = "70",
-        unit = "kg",
-        label = "Berat Badan",
-        backgroundColor = Color(0xFFFF8FA3),
-        icon = R.drawable.timbangan
-    ),
-    HealthMetric(
-        value = "100",
-        unit = "mg/dL",
-        label = "Gula Darah",
-        backgroundColor = Color(0xFF7DD8C4),
-        icon = R.drawable.ukuran
-    ),
-    HealthMetric(
-        value = "180",
-        unit = "kcal",
-        label = "Nutrisi",
-        backgroundColor = Color(0xFFB89FD9),
-        icon = R.drawable.brokoli
-    ),
-    HealthMetric(
-        value = "45",
-        unit = "menit",
-        label = "Aktivitas",
-        backgroundColor = Color(0xFFFF9B9B),
-        icon = R.drawable.anaksenam
+// Health metrics data dengan desain profesional - menggunakan data real-time
+fun getHealthMetrics(data: com.example.lifin.data.local.LatestHealthMetrics): List<HealthMetric> {
+    return listOf(
+        HealthMetric(
+            value = data.tinggiBadan.ifEmpty { "-" },
+            unit = "cm",
+            label = "Tinggi Badan",
+            backgroundColor = Color(0xFF6BA3D8),
+            icon = R.drawable.jerapah
+        ),
+        HealthMetric(
+            value = data.tekananDarah.ifEmpty { "-" },
+            unit = "mmHg",
+            label = "Tekanan Darah",
+            backgroundColor = Color(0xFF5B9BD5),
+            icon = R.drawable.termometer
+        ),
+        HealthMetric(
+            value = data.beratBadan.ifEmpty { "-" },
+            unit = "kg",
+            label = "Berat Badan",
+            backgroundColor = Color(0xFFFF8FA3),
+            icon = R.drawable.timbangan
+        ),
+        HealthMetric(
+            value = data.gulaDarah.ifEmpty { "-" },
+            unit = "mg/dL",
+            label = "Gula Darah",
+            backgroundColor = Color(0xFF7DD8C4),
+            icon = R.drawable.ukuran
+        ),
+        HealthMetric(
+            value = data.nutrisi.ifEmpty { "-" },
+            unit = "kcal",
+            label = "Nutrisi",
+            backgroundColor = Color(0xFFB89FD9),
+            icon = R.drawable.brokoli
+        ),
+        HealthMetric(
+            value = data.aktivitas.ifEmpty { "-" },
+            unit = "menit",
+            label = "Aktivitas",
+            backgroundColor = Color(0xFFFF9B9B),
+            icon = R.drawable.anaksenam
+        )
     )
-)
+}
 
 @Composable
 fun HealthMetricCard(metric: HealthMetric) {
@@ -655,8 +633,6 @@ private fun HealthNoteForm(onSave: (HealthNote) -> Unit) {
     // Nutrisi fields
     var menuMakanan by remember { mutableStateOf("") }
     var sesiMakan by remember { mutableStateOf("") }
-    var makananUtama by remember { mutableStateOf("") }
-    var makananPendamping by remember { mutableStateOf("") }
     var karbohidrat by remember { mutableStateOf("") }
     var protein by remember { mutableStateOf("") }
     var lemak by remember { mutableStateOf("") }
@@ -729,64 +705,76 @@ private fun HealthNoteForm(onSave: (HealthNote) -> Unit) {
                 1 -> {
                     // Nutrisi Tab
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            LabeledInput(
-                                label = "Menu makanan :",
-                                value = menuMakanan,
-                                placeholder = "Ayam rebus",
-                                onChange = { menuMakanan = it },
-                                modifier = Modifier.weight(1f)
+                        // Menu makanan full width
+                        LabeledInput(
+                            label = "Menu makanan :",
+                            value = menuMakanan,
+                            placeholder = "Contoh: Ayam rebus",
+                            onChange = { menuMakanan = it },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        
+                        // Sesi makan dengan pilihan buttons
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "Sesi makan :",
+                                fontSize = 14.sp,
+                                color = Color(0xFF4F5F2E),
+                                fontWeight = FontWeight.Medium
                             )
-                            LabeledInput(
-                                label = "Sesi makan :",
-                                value = sesiMakan,
-                                placeholder = "Sarapan",
-                                onChange = { sesiMakan = it },
-                                modifier = Modifier.weight(1f)
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf("Sarapan", "Makan Siang", "Makan malam").forEach { sesi ->
+                                    Button(
+                                        onClick = { sesiMakan = sesi },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (sesiMakan == sesi) Color(0xFF738A45) else Color(0xFFE8F5E9)
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = sesi,
+                                            fontSize = 12.sp,
+                                            color = if (sesiMakan == sesi) Color.White else Color(0xFF4F5F2E),
+                                            fontWeight = if (sesiMakan == sesi) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
                         }
+                        
+                        // Karbohidrat dan Protein
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             LabeledInput(
-                                label = "Makanan utama :",
-                                value = makananUtama,
-                                placeholder = "Nasi",
-                                onChange = { makananUtama = it },
-                                modifier = Modifier.weight(1f)
-                            )
-                            LabeledInput(
-                                label = "Makanan pendamping :",
-                                value = makananPendamping,
-                                placeholder = "Lauk",
-                                onChange = { makananPendamping = it },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            LabeledInput(
-                                label = "Karbohidrat :",
+                                label = "Karbohidrat",
                                 value = karbohidrat,
                                 placeholder = "gram",
                                 onChange = { karbohidrat = it },
                                 modifier = Modifier.weight(1f)
                             )
                             LabeledInput(
-                                label = "Protein :",
+                                label = "Protein",
                                 value = protein,
                                 placeholder = "gram",
                                 onChange = { protein = it },
                                 modifier = Modifier.weight(1f)
                             )
                         }
+                        
+                        // Lemak dan Kalori
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             LabeledInput(
-                                label = "Lemak :",
+                                label = "Lemak",
                                 value = lemak,
                                 placeholder = "gram",
                                 onChange = { lemak = it },
                                 modifier = Modifier.weight(1f)
                             )
                             LabeledInput(
-                                label = "Kalori :",
+                                label = "Kalori",
                                 value = kalori,
                                 placeholder = "kkal",
                                 onChange = { kalori = it },
@@ -829,8 +817,8 @@ private fun HealthNoteForm(onSave: (HealthNote) -> Unit) {
                             nutrisi = menuMakanan,
                             menuMakanan = menuMakanan,
                             sesiMakan = sesiMakan,
-                            makananUtama = makananUtama,
-                            makananPendamping = makananPendamping,
+                            makananUtama = "",
+                            makananPendamping = "",
                             karbohidrat = karbohidrat,
                             protein = protein,
                             lemak = lemak,

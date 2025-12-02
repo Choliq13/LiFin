@@ -154,8 +154,8 @@ fun ChangePasswordScreen(
                                         } else {
                                             val error = result.exceptionOrNull()?.message ?: "Gagal mengubah password"
                                             errorMessage = error
-                                            // Jika password lama salah, tampilkan tombol lupa password
-                                            if (error.contains("salah", ignoreCase = true) || error.contains("incorrect", ignoreCase = true) || error.contains("current", ignoreCase = true)) {
+                                            // Jika password saat ini tidak sesuai, tampilkan tombol lupa password
+                                            if (error.contains("tidak sesuai", ignoreCase = true) || error.contains("salah", ignoreCase = true) || error.contains("incorrect", ignoreCase = true) || error.contains("current", ignoreCase = true)) {
                                                 showForgotPassword = true
                                             }
                                         }

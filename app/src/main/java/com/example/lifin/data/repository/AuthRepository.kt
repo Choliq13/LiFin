@@ -30,7 +30,7 @@ class AuthRepository {
             prefs?.setLoggedIn(email)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(IllegalArgumentException("Email atau password salah: ${e.message}"))
+            Result.failure(IllegalArgumentException("Email atau password tidak valid. Silakan coba lagi atau daftar akun baru."))
         }
     }
 
@@ -57,14 +57,44 @@ class AuthRepository {
                 return Result.failure(IllegalArgumentException("Password baru tidak boleh sama dengan password saat ini"))
             }
             
-            // Update password di Supabase
-            SupabaseClient.client.auth.updateUser {
-                password = new
-            }
+            // Dapatkan email user yang sedang login
+            val currentUser = SupabaseClient.client.auth.currentUserOrNull()
+            val userEmail = currentUser?.email 
+                ?: return Result.failure(IllegalArgumentException("User tidak ditemukan. Silakan login kembali."))
             
-            Result.success(Unit)
+            // Verifikasi password saat ini dengan mencoba sign in baru
+            try {
+                // Test authentication dengan kredensial baru di dalam try block
+                val testClient = io.github.jan.supabase.createSupabaseClient(
+                    supabaseUrl = "https://zddbdwavmasndcymjone.supabase.co",
+                    supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkZGJkd2F2bWFzbmRjeW1qb25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI5NDc4MDksImV4cCI6MjA0ODUyMzgwOX0.Fk4T15wNdruD5yX-KjHv6_r0uEFNZE4kxnDPOirvPRs"
+                ) {
+                    install(io.github.jan.supabase.auth.Auth)
+                }
+                
+                // Coba login dengan password yang dimasukkan untuk verifikasi
+                testClient.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                    this.email = userEmail
+                    this.password = current
+                }
+                
+                // Jika sampai sini berarti password benar, update password di client utama
+                SupabaseClient.client.auth.updateUser {
+                    password = new
+                }
+                
+                Result.success(Unit)
+            } catch (e: Exception) {
+                // Password salah atau ada error lain
+                val errorMsg = e.message?.lowercase() ?: ""
+                return if (errorMsg.contains("invalid") || errorMsg.contains("credentials") || errorMsg.contains("password")) {
+                    Result.failure(IllegalArgumentException("Password saat ini tidak sesuai. Silakan periksa kembali atau gunakan fitur lupa password."))
+                } else {
+                    Result.failure(IllegalArgumentException("Gagal mengubah password: ${e.message}"))
+                }
+            }
         } catch (e: Exception) {
-            Result.failure(IllegalArgumentException("Gagal mengubah password: ${e.message}"))
+            Result.failure(IllegalArgumentException("Gagal mengubah password. Silakan coba lagi."))
         }
     }
 
